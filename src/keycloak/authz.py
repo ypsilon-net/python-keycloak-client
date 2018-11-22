@@ -144,3 +144,51 @@ class KeycloakAuthz(WellKnownMixin, object):
                     res.append(ptuple)
 
         return res == resource_scopes_tuples
+
+    def get_roles(self, token, resource_scopes_tuples=None, submit_request=False, ticket=None):
+        """
+        Request roles of user from keycloak server.
+
+        :param str token: client access token
+        :param tuple resource_scopes_tuples: list of tuples (resource, scope)
+        :param boolean submit_request: when resource_scopes_tuples are provided submit request if not allowed to access?
+        rtype: dict
+        """
+        headers = {
+            "Authorization": "Bearer " + token,
+            'Content-type': 'application/x-www-form-urlencoded',
+        }
+
+        data = [
+            ('grant_type', 'urn:ietf:params:oauth:grant-type:uma-ticket'),
+            ('audience', self._client_id),
+            ('response_include_resource_name', True),
+        ]
+
+        if resource_scopes_tuples:
+            for atuple in resource_scopes_tuples:
+                data.append(('permission', '#'.join(atuple)))
+            data.append(('submit_request', submit_request))
+        elif ticket:
+            data.append(('ticket', ticket))
+
+        roles_info = {}
+
+        try:
+            response = self._realm.client.post(
+                self.well_known['token_endpoint'],
+                data=urlencode(data),
+                headers=headers,
+            )
+
+            error = response.get('error')
+            if error:
+                self.logger.warn('%s: %s', error, response.get('error_description'))
+            else:
+                token = response.get('refresh_token')
+                decoded_token = self._decode_token(token.split('.')[1])
+                roles_info = decoded_token.get('realm_access', {})
+        except (requests.exceptions.HTTPError) as error:
+            self.logger.warn(str(error))
+        return roles_info
+    
