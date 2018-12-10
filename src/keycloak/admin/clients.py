@@ -20,6 +20,11 @@ class Clients(KeycloakAdminBase):
             )
         )
 
+    def all_ids(self):
+        ids = [c['clientId'] for c in self.all()]
+        ids.sort(key=lambda s: s.lower()) # case insensitive sorting
+        return ids
+
     def by_id(self, id):
         return Client(client=self._client, realm_name=self._realm_name, id=id)
 
