@@ -1,21 +1,48 @@
 import json
 from collections import OrderedDict
-
 from keycloak.admin import KeycloakAdminBase
+from urllib import urlencode
 
 __all__ = ('Users',)
 
 
 class Users(KeycloakAdminBase):
-    _paths = {
-        'collection': '/auth/admin/realms/{realm}/users'
+    _defaults_all_query = {
+        'max': -1, # turns off default max (100)
     }
-
+    _paths = {
+        'collection': '/auth/admin/realms/{realm}/users',
+        'count': '/auth/admin/realms/{realm}/users/count',
+    }
     _realm_name = None
 
     def __init__(self, realm_name, *args, **kwargs):
         self._realm_name = realm_name
         super(Users, self).__init__(*args, **kwargs)
+
+    def all(self, col=None, **query):
+        url = self._client.get_full_url(
+            self.get_path('collection', realm=self._realm_name)
+        )
+
+        # add query parameters
+        _query = self._defaults_all_query.copy()
+        _query.update(query)
+        if _query: # available parameters: https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
+            url += '?' + urlencode(_query)
+
+        # request users & return (formated) result
+        res = self._client.get(url)
+        if col is not None:
+            res = [u[col] for u in res]
+        return res
+
+    def count(self):
+        return self._client.get(
+            self._client.get_full_url(
+                self.get_path('count', realm=self._realm_name)
+            )
+        )
 
     def create(self, username, **kwargs):
         """

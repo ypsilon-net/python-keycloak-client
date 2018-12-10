@@ -19,7 +19,9 @@ class Realms(KeycloakAdminBase):
         )
 
     def all_names(self):
-        return [r['realm'] for r in self.all()]
+        res = [r['realm'] for r in self.all()]
+        res.sort(key=lambda s: s.lower()) # case insensitive sorting
+        return res
 
     def by_name(self, name):
         return Realm(name=name, client=self._client)
