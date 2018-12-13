@@ -20,16 +20,16 @@ class Users(KeycloakAdminBase):
         self._realm_name = realm_name
         super(Users, self).__init__(*args, **kwargs)
 
-    def all(self, col=None, **query):
+    def all(self, col=None, **kwargs):
         url = self._client.get_full_url(
             self.get_path('collection', realm=self._realm_name)
         )
 
         # add query parameters
-        _query = self._defaults_all_query.copy()
-        _query.update(query)
-        if _query: # available parameters: https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
-            url += '?' + urlencode(_query)
+        query = self._defaults_all_query.copy()
+        query.update(kwargs)
+        if query: # available parameters: https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
+            url += '?' + urlencode(query)
 
         # request users & return (formated) result
         res = self._client.get(url)
