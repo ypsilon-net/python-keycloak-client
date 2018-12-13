@@ -1,7 +1,6 @@
 import json
 from collections import OrderedDict
-
-from keycloak.admin import KeycloakAdminBase
+from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection
 
 ROLE_KWARGS = [
     'description',
@@ -23,7 +22,7 @@ def to_camel_case(snake_cased_str):
     return components[0] + ''.join(map(str.capitalize, components[1:]))
 
 
-class Roles(KeycloakAdminBase):
+class Roles(KeycloakAdminBase, KeycloakAdminCollection):
     _client_id = None
     _realm_name = None
     _paths = {
@@ -62,14 +61,12 @@ class Roles(KeycloakAdminBase):
                 payload[to_camel_case(key)] = kwargs[key]
 
         return self._client.post(
-            url=self._client.get_full_url(
-                self.get_path('collection',
-                              realm=self._realm_name,
-                              id=self._client_id)
-            ),
+            url=self._url_collection(),
             data=json.dumps(payload)
         )
 
+    def _url_collection_params(self):
+        return {'realm': self._realm_name, 'id': self._client_id}
 
 class Role(KeycloakAdminBase):
     _paths = {

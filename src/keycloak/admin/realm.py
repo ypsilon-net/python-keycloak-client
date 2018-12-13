@@ -1,9 +1,9 @@
-from keycloak.admin import KeycloakAdminBase
+from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection
 
 __all__ = ('Realm', 'Realms',)
 
 
-class Realms(KeycloakAdminBase):
+class Realms(KeycloakAdminBase, KeycloakAdminCollection):
     _paths = {
         'collection': '/auth/admin/realms'
     }
@@ -11,20 +11,11 @@ class Realms(KeycloakAdminBase):
     def __init__(self, *args, **kwargs):
         super(Realms, self).__init__(*args, **kwargs)
 
-    def all(self):
-        return self._client.get(
-            self._client.get_full_url(
-                self.get_path('collection')
-            )
-        )
-
-    def all_names(self):
-        res = [r['realm'] for r in self.all()]
-        res.sort(key=lambda s: s.lower()) # case insensitive sorting
-        return res
-
     def by_name(self, name):
         return Realm(name=name, client=self._client)
+
+    def _url_collection_params(self):
+        pass
 
 
 class Realm(KeycloakAdminBase):
