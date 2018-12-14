@@ -1,5 +1,5 @@
 import abc
-from urllib import urlencode
+import six
 
 __all__ = (
     'KeycloakAdmin',
@@ -134,7 +134,7 @@ class KeycloakAdminCollection(object):
         params = self._url_collection_params() or {} # path-params
         url = self._client.get_full_url(self.get_path('collection', **params))
         if kwargs:
-            url += '?' + urlencode(kwargs)
+            url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
 
     @abc.abstractmethod
