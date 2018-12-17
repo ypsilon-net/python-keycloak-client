@@ -12,7 +12,7 @@ class Realms(KeycloakAdminBase, KeycloakAdminCollection):
         super(Realms, self).__init__(*args, **kwargs)
 
     def by_name(self, name):
-        return Realm(name=name, client=self._client)
+        return Realm(name=name, admin=self._admin)
 
     def _url_collection_params(self):
         pass
@@ -28,9 +28,9 @@ class Realm(KeycloakAdminBase):
     @property
     def clients(self):
         from keycloak.admin.clients import Clients
-        return Clients(realm_name=self._name, client=self._client)
+        return Clients(realm_name=self._name, admin=self._admin)
 
     @property
     def users(self):
         from keycloak.admin.users import Users
-        return Users(realm_name=self._name, client=self._client)
+        return Users(realm_name=self._name, admin=self._admin)

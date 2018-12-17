@@ -14,7 +14,7 @@ class Clients(KeycloakAdminBase, KeycloakAdminCollection):
         super(Clients, self).__init__(*args, **kwargs)
 
     def by_id(self, id):
-        return Client(client=self._client, realm_name=self._realm_name, id=id)
+        return Client(admin=self._admin, realm_name=self._realm_name, id=id)
 
     def by_name(self, name):
         res = self.unsorted().all(clientId=name)
@@ -37,5 +37,5 @@ class Client(KeycloakAdminBase):
     @property
     def roles(self):
         from keycloak.admin.roles import Roles
-        return Roles(client=self._client, client_id=self._id,
+        return Roles(admin=self._admin, client_id=self._id,
                      realm_name=self._realm_name)

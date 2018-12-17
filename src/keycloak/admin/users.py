@@ -20,8 +20,8 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
         super(Users, self).__init__(*args, **kwargs)
 
     def count(self):
-        return self._client.get(
-            self._client.get_full_url(
+        return self._admin.get(
+            self._admin.get_full_url(
                 self.get_path('count', realm=self._realm_name)
             )
         )
@@ -56,7 +56,7 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
         if 'enabled' in kwargs:
             payload['enabled'] = kwargs['enabled']
 
-        return self._client.post(
+        return self._admin.post(
             url=self._url_collection(),
             data=json.dumps(payload)
         )

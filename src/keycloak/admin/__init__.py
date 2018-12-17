@@ -9,14 +9,14 @@ __all__ = (
 
 
 class KeycloakAdminBase(object):
-    _client = None
+    _admin = None
     _paths = None
 
-    def __init__(self, client):
+    def __init__(self, admin):
         """
-        :param keycloak.admin.KeycloakAdmin client:
+        :param keycloak.admin.KeycloakAdmin admin:
         """
-        self._client = client
+        self._admin = admin
 
     def get_path(self, name, **kwargs):
         if self._paths is None:
@@ -60,7 +60,7 @@ class KeycloakAdmin(object):
     @property
     def realms(self):
         from keycloak.admin.realm import Realms
-        return Realms(client=self)
+        return Realms(admin=self)
 
     def post(self, url, data, headers=None, **kwargs):
         return self._realm.client.post(
@@ -102,7 +102,7 @@ class KeycloakAdminCollection(object):
     def all(self, **kwargs):
         query = self._defaults_all_query.copy()
         query.update(kwargs)
-        return self._all_sorted(self._client.get(self._url_collection(**query)))
+        return self._all_sorted(self._admin.get(self._url_collection(**query)))
 
     def all_on(self, col, sort=True, **kwargs):
         res = self.unsorted().all(**kwargs)
@@ -132,7 +132,7 @@ class KeycloakAdminCollection(object):
 
     def _url_collection(self, **kwargs): # TODO generalize?
         params = self._url_collection_params() or {} # path-params
-        url = self._client.get_full_url(self.get_path('collection', **params))
+        url = self._admin.get_full_url(self.get_path('collection', **params))
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url

@@ -36,7 +36,7 @@ class Roles(KeycloakAdminBase, KeycloakAdminCollection):
 
     def by_name(self, role_name):
         return Role(realm_name=self._realm_name, client_id=self._client_id,
-                    role_name=role_name, client=self._client)
+                    role_name=role_name, admin=self._admin)
 
     def create(self, name, **kwargs):
         """
@@ -60,7 +60,7 @@ class Roles(KeycloakAdminBase, KeycloakAdminCollection):
             if key in kwargs:
                 payload[to_camel_case(key)] = kwargs[key]
 
-        return self._client.post(
+        return self._admin.post(
             url=self._url_collection(),
             data=json.dumps(payload)
         )
@@ -101,8 +101,8 @@ class Role(KeycloakAdminBase):
             if key in kwargs:
                 payload[to_camel_case(key)] = kwargs[key]
 
-        return self._client.put(
-            url=self._client.get_full_url(
+        return self._admin.put(
+            url=self._admin.get_full_url(
                 self.get_path('single',
                               realm=self._realm_name,
                               id=self._client_id,
