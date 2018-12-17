@@ -35,6 +35,10 @@ class Client(KeycloakAdminBase):
         super(Client, self).__init__(*args, **kwargs)
 
     @property
+    def id(self):
+        return self._id
+
+    @property
     def roles(self):
         from keycloak.admin.roles import Roles
         return Roles(admin=self._admin, client_id=self._id,

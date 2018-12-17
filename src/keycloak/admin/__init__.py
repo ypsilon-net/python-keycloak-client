@@ -137,7 +137,7 @@ class KeycloakAdminCollection(object):
 
     def _url_collection(self, **kwargs): # TODO generalize?
         params = self._url_collection_params() or {} # path-params
-        url = self._admin.get_full_url(self.get_path('collection', **params))
+        url = self._admin.get_full_url(self.get_path(self._url_collection_path_name(), **params))
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
@@ -145,3 +145,6 @@ class KeycloakAdminCollection(object):
     @abc.abstractmethod
     def _url_collection_params(self): # returns path-parameters, which are neccessary on collection-request
         pass
+
+    def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
+        return 'collection'

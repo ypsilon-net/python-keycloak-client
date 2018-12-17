@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection
 
-__all__ = ('Users',)
+__all__ = ('User', 'Users',)
 
 
 class Users(KeycloakAdminBase, KeycloakAdminCollection):
@@ -18,6 +18,14 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
     def __init__(self, realm_name, *args, **kwargs):
         self._realm_name = realm_name
         super(Users, self).__init__(*args, **kwargs)
+
+    def by_id(self, id):
+        return User(admin=self._admin, realm_name=self._realm_name, id=id)
+
+    def by_name(self, name):
+        res = self.unsorted().all(username=name)
+        if res:
+            return self.by_id(res[0]['id'])
 
     def count(self):
         return self._admin.get(
@@ -63,3 +71,18 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
 
     def _url_collection_params(self):
         return {'realm': self._realm_name}
+
+
+class User(KeycloakAdminBase):
+    _id = None
+    _realm_name = None
+
+    def __init__(self, realm_name, id, *args, **kwargs):
+        self._id = id
+        self._realm_name = realm_name
+        super(User, self).__init__(*args, **kwargs)
+
+    @property
+    def role_mappings(self):
+        from keycloak.admin.role_mappings import RoleMappings
+        return RoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._id)
