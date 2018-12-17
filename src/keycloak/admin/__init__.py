@@ -87,6 +87,11 @@ class KeycloakAdmin(object):
         else:
             token = self._token
 
+        if token is None:
+            raise Exception('No token stored in %s. You need to call %s.set_token with an valid access token/function first.' % (
+                self.__class__.__name__, self.__class__.__name__
+            ))
+
         headers = headers or {}
         headers['Authorization'] = "Bearer {}".format(token)
         headers['Content-Type'] = 'application/json'
