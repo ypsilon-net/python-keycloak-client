@@ -12,7 +12,7 @@ class KeycloakAdminBase(object):
     _admin = None
     _paths = None
 
-    def __init__(self, admin):
+    def __init__(self, admin, **kwargs):
         """
         :param keycloak.admin.KeycloakAdmin admin:
         """
