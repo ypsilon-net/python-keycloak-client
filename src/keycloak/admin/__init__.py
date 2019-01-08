@@ -1,12 +1,16 @@
 import abc
 import six
+import re
+
 
 __all__ = (
     'KeycloakAdmin',
     'KeycloakAdminBase',
+    'KeycloakAdminBaseElement',
     'KeycloakAdminCollection',
 )
 
+PAT_VAR = re.compile('{([\_\w]+)}')
 
 class KeycloakAdminBase(object):
     _admin = None
@@ -23,6 +27,23 @@ class KeycloakAdminBase(object):
             raise NotImplementedError()
 
         return self._paths[name].format(**kwargs)
+
+
+class KeycloakAdminBaseElement(KeycloakAdminBase):
+    _params = None
+
+    def __call__(self):
+        # get keys
+        reqparams = {}
+        for varname in PAT_VAR.findall(self._paths['self']):
+            reqparams[varname] = getattr(self, varname)
+
+        if not self._params:
+            self._params = self._admin.get(
+                self._admin.get_full_url(self.get_path('self', **reqparams))
+            )
+        return self._params
+
 
 
 class KeycloakAdmin(object):
@@ -103,6 +124,13 @@ class KeycloakAdminCollection(object):
     _defaults_all_query = {} # default query-parameters
     _sort_col = None
     _sort_asc = True
+    _itemclass = abc.ABCMeta
+
+    def __call__(self, **kwargs):
+        return [
+            self._itemclass(**self._url_item_params(k))
+            for k in self.all(**kwargs)
+        ]
 
     def all(self, **kwargs):
         query = self._defaults_all_query.copy()
@@ -141,6 +169,10 @@ class KeycloakAdminCollection(object):
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
+
+    @abc.abstractmethod
+    def _url_item_params(self, item):
+        return {}
 
     @abc.abstractmethod
     def _url_collection_params(self): # returns path-parameters, which are neccessary on collection-request
