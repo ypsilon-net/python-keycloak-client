@@ -86,11 +86,19 @@ class User(KeycloakAdminBase):
         super(User, self).__init__(*args, **kwargs)
 
     def get(self):
-        return self._admin.get(
+        res = self._admin.get(
             url=self._admin.get_full_url(
                 self.get_path('single', realm=self._realm_name, id=self._id)
             )
         )
+
+        if res: # format keys
+            if 'firstName' in res:
+                res['first_name'] = res.pop('firstName')
+            if 'lastName' in res:
+                res['last_name'] = res.pop('lastName')
+
+        return res
 
     @property
     def role_mappings(self):
