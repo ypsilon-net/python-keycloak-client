@@ -74,6 +74,7 @@ Create release
 
     $ git checkout master
     $ git pull
+    -- Update release notes --
     $ bumpversion release
     $ make deploy-pypi
     $ bumpversion --no-tag patch
@@ -83,6 +84,10 @@ Release Notes
 =============
 
 **unreleased**
+
+**v0.2.1**
+
+* Including aio version in released package. (thanks to @mackeyja92)
 
 **v0.2.0**
 
