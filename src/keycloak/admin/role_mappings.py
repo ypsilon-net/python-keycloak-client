@@ -6,18 +6,27 @@ __all__ = ('RoleMappings', 'ClientRoleMappings',)
 
 class RoleMappings(KeycloakAdminCollection):
     _realm_name = None
-    _user_id = None
+    _user = None
     _paths = {
         'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings',
     }
 
-    def __init__(self, realm_name, user_id, *args, **kwargs):
+    def __init__(self, realm_name, user, *args, **kwargs):
         self._realm_name = realm_name
-        self._user_id = user_id
         super(RoleMappings, self).__init__(*args, **kwargs)
 
+        from keycloak.admin.users import User
+        if isinstance(user, User):
+            self._user = user
+        else:
+            self._user = User(admin=self._admin, realm_name=self._realm_name, id=user)
+
+    @property
+    def _user_id(self):
+        return self._user.id
+
     def by_client_id(self, client_id):
-        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._user_id, client=client_id)
+        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user=self._user, client=client_id)
 
     def by_client_name(self, client_name):
         from keycloak.admin.clients import Clients
@@ -32,7 +41,7 @@ class RoleMappings(KeycloakAdminCollection):
             )
         elif pos == 'clientMappings':
             return dict(
-                client=data['id'], admin=self._admin, realm_name=self._realm_name, user_id=self._user_id
+                client=data['id'], admin=self._admin, realm_name=self._realm_name, user=self._user
             )
 
 

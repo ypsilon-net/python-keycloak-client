@@ -58,7 +58,7 @@ class User(KeycloakAdminBaseElement):
     @property
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
-        return RoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._id)
+        return RoleMappings(admin=self._admin, realm_name=self._realm_name, user=self)
 
 
 class Users(KeycloakAdminCollection):
