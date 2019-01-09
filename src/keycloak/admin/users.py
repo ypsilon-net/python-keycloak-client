@@ -80,11 +80,13 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
         if res:
             return self.by_id(res[0]['id'])
 
+    def __len__(self):
+        return self.count()
+
     def count(self):
         return self._admin.get(
-            self._admin.get_full_url(realm_name=self._realm_name)
+            self._admin.get_full_url(self.get_path('count', realm_name=self._realm_name))
         )
-
 
     def create(self, username, **kwargs):
         """
@@ -126,6 +128,6 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
 
     def _url_item_params(self, data):
         return dict(
-            id=data['id'], admin=self._admin, realm_name=self._realm_name
+            id=data['id'], admin=self._admin, realm_name=self._realm_name,
         )
 

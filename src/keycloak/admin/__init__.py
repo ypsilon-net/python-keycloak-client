@@ -1,7 +1,6 @@
 import abc
 import six
 import re
-import itertools
 
 
 __all__ = (
