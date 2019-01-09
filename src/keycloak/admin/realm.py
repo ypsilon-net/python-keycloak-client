@@ -6,29 +6,30 @@ __all__ = ('Realm', 'Realms',)
 class Realm(KeycloakAdminBaseElement):
     _name = None
     _paths = {
-        'self': '/auth/admin/realms/{_name}',
+        'single': '/auth/admin/realms/{realm_name}',
     }
 
-    def __init__(self, name, *args, **kwargs):
-        self._name = name
+    def __init__(self, realm_name, *args, **kwargs):
+        self._realm_name = realm_name
         super(Realm, self).__init__(*args, **kwargs)
 
-    def __repr__(self):
-        return '<%s object name="%s">' % (
-            self.__class__.__name__, self._name,)
-
     def _url_collection_params(self):
-        return {'realm': self._name}
+        return {'realm': self._realm_name}
 
     @property
     def clients(self):
         from keycloak.admin.clients import Clients
-        return Clients(realm_name=self._name, admin=self._admin)
+        return Clients(realm_name=self._realm_name, admin=self._admin)
 
     @property
     def users(self):
         from keycloak.admin.users import Users
-        return Users(realm_name=self._name, admin=self._admin)
+        return Users(realm_name=self._realm_name, admin=self._admin)
+
+    @property
+    def roles(self):
+        from keycloak.admin.roles import RealmRoles
+        return RealmRoles(realm_name=self._realm_name, admin=self._admin)
 
 
 class Realms(KeycloakAdminBase, KeycloakAdminCollection):
@@ -41,12 +42,12 @@ class Realms(KeycloakAdminBase, KeycloakAdminCollection):
         super(Realms, self).__init__(*args, **kwargs)
 
     def by_name(self, name):
-        return Realm(name=name, admin=self._admin)
+        return Realm(realm_name=name, admin=self._admin)
 
     def _url_collection_params(self):
         pass
 
     def _url_item_params(self, data):
-        return dict(name=data['realm'], admin=self._admin)
+        return dict(realm_name=data['realm'], admin=self._admin)
 
 
