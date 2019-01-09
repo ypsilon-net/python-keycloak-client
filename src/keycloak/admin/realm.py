@@ -1,4 +1,4 @@
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 
 __all__ = ('Realm', 'Realms',)
 
@@ -12,9 +12,6 @@ class Realm(KeycloakAdminBaseElement):
     def __init__(self, realm_name, *args, **kwargs):
         self._realm_name = realm_name
         super(Realm, self).__init__(*args, **kwargs)
-
-    def _url_collection_params(self):
-        return {'realm': self._realm_name}
 
     @property
     def clients(self):
@@ -32,7 +29,7 @@ class Realm(KeycloakAdminBaseElement):
         return RealmRoles(realm_name=self._realm_name, admin=self._admin)
 
 
-class Realms(KeycloakAdminBase, KeycloakAdminCollection):
+class Realms(KeycloakAdminCollection):
     _paths = {
         'collection': '/auth/admin/realms'
     }
@@ -44,10 +41,5 @@ class Realms(KeycloakAdminBase, KeycloakAdminCollection):
     def by_name(self, name):
         return Realm(realm_name=name, admin=self._admin)
 
-    def _url_collection_params(self):
-        pass
-
     def _url_item_params(self, data):
         return dict(realm_name=data['realm'], admin=self._admin)
-
-

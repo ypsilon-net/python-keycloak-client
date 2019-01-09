@@ -1,13 +1,13 @@
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection
+from keycloak.admin import KeycloakAdminCollection
 
 __all__ = ('RoleMappings', 'ClientRoleMappings',)
 
 
-class RoleMappings(KeycloakAdminBase, KeycloakAdminCollection):
+class RoleMappings(KeycloakAdminCollection):
     _realm_name = None
     _user_id = None
     _paths = {
-        'collection': '/auth/admin/realms/{realm}/users/{id}/role-mappings',
+        'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings',
     }
 
     def __init__(self, realm_name, user_id="not set", *args, **kwargs):
@@ -24,9 +24,6 @@ class RoleMappings(KeycloakAdminBase, KeycloakAdminCollection):
         if client:
             return self.by_client_id(client.id)
 
-    def _url_collection_params(self):
-        return {'realm': self._realm_name, 'id': self._user_id}
-
     def _url_item_params(self, data):
         return {} # TODO item-class & -handling has to be added first
 
@@ -35,9 +32,9 @@ class ClientRoleMappings(RoleMappings):
     _client_id = None
     _composite = False
     _paths = {
-        'available': '/auth/admin/realms/{realm}/users/{id}/role-mappings/clients/{client}/available',
-        'collection': '/auth/admin/realms/{realm}/users/{id}/role-mappings/clients/{client}',
-        'composite': '/auth/admin/realms/{realm}/users/{id}/role-mappings/clients/{client}/composite',
+        'available': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/available',
+        'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}',
+        'composite': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/composite',
     }
 
     def __init__(self, client_id, *args, **kwargs):
@@ -63,9 +60,6 @@ class ClientRoleMappings(RoleMappings):
     def roles(self):
         from keycloak.admin.roles import ClientRoles
         return ClientRoles(admin=self._admin, realm_name=self._realm_name, client_id=self._client_id)
-
-    def _url_collection_params(self):
-        return {'realm': self._realm_name, 'id': self._user_id, 'client': self._client_id}
 
     def _url_collection_path_name(self):
         if self._available:

@@ -1,4 +1,4 @@
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 
 __all__ = ('Client', 'Clients',)
 
@@ -26,7 +26,7 @@ class Client(KeycloakAdminBaseElement):
         return ClientRoles(admin=self._admin, realm_name=self._realm_name, client=self)
 
 
-class Clients(KeycloakAdminBase, KeycloakAdminCollection):
+class Clients(KeycloakAdminCollection):
     _realm_name = None
     _paths = {
         'collection': '/auth/admin/realms/{realm_name}/clients'
@@ -45,12 +45,8 @@ class Clients(KeycloakAdminBase, KeycloakAdminCollection):
         if res:
             return self.by_id(res[0]['id'])
 
-    def _url_collection_params(self):
-        return {'realm_name': self._realm_name}
-
     def _url_item_params(self, data):
         return dict(
             id=data['id'], admin=self._admin, realm_name=self._realm_name
         )
-
 

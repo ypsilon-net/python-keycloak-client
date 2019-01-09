@@ -27,6 +27,19 @@ class KeycloakAdminBase(object):
             raise NotImplementedError()
         return self._paths[name].format(**kwargs)
 
+    def get_path_dyn(self, name, **kwargs): # get path with dynamic path-arguments on member-vars
+        if self._paths is None:
+            raise NotImplementedError()
+
+        path_args = {}
+        for varname in PAT_VAR.findall(self._paths[name]):
+            attr = '_%s' % varname
+            if hasattr(self, attr):
+                path_args[varname] = getattr(self, attr)
+        path_args.update(kwargs)
+
+        return self.get_path(name, **path_args)
+
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
     _params = None
@@ -38,14 +51,9 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
         self._params = params
 
     def __call__(self):
-        # get keys
-        reqparams = {}
-        for varname in PAT_VAR.findall(self._paths['single']):
-            reqparams[varname] = getattr(self, '_%s' % varname)
-
         if not self._params:
             self._params = self._admin.get(
-                self._admin.get_full_url(self.get_path('single', **reqparams))
+                self._admin.get_full_url(self.get_path_dyn('single'))
             )
         return self._params
 
@@ -60,6 +68,13 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
                 params.append('%s="%s"' % (name, self().get(key)))
 
         return '<%s object %s>' % (self.__class__.__name__, " ".join(params))
+
+    def get(self):
+        res = self()
+        if self._idents:
+            for key, kc_key in self._idents.items():
+                res[key] = res.pop(kc_key) if kc_key in res else None
+        return res
 
 class KeycloakAdmin(object):
     _realm = None
@@ -134,7 +149,7 @@ class KeycloakAdmin(object):
         return headers
 
 
-class KeycloakAdminCollection(object):
+class KeycloakAdminCollection(KeycloakAdminBase):
     __metaclass__ = abc.ABCMeta
     _defaults_all_query = {} # default query-parameters
     _sort_col = None
@@ -192,7 +207,7 @@ class KeycloakAdminCollection(object):
 
     def _url_collection(self, **kwargs): # TODO generalize?
         params = self._url_collection_params() or {} # path-params
-        url = self._admin.get_full_url(self.get_path(self._url_collection_path_name(), **params))
+        url = self._admin.get_full_url(self.get_path_dyn(self._url_collection_path_name(), **params))
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
@@ -201,7 +216,6 @@ class KeycloakAdminCollection(object):
     def _url_item_params(self, item):
         return {}
 
-    @abc.abstractmethod
     def _url_collection_params(self): # returns path-parameters, which are neccessary on collection-request
         pass
 
