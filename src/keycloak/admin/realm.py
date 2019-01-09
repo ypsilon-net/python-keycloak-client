@@ -28,6 +28,11 @@ class Realm(KeycloakAdminBaseElement):
         from keycloak.admin.roles import RealmRoles
         return RealmRoles(realm_name=self._realm_name, admin=self._admin)
 
+    @property
+    def groups(self):
+        from keycloak.admin.groups import Groups
+        return Groups(realm_name=self._realm_name, admin=self._admin)
+
 
 class Realms(KeycloakAdminCollection):
     _paths = {
