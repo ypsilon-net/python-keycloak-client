@@ -7,18 +7,14 @@ class Client(KeycloakAdminBaseElement):
     _id = None
     _realm_name = None
     _paths = {
-        'self': '/auth/admin/realms/{_realm_name}/clients/{_id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{id}',
     }
-
+    _idents = {'name': 'clientId'}
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
         self._realm_name = realm_name
         super(Client, self).__init__(*args, **kwargs)
-
-    def __repr__(self):
-        return '<%s object realm="%s" id="%s" clientId="%s">' % (
-            self.__class__.__name__, self._realm_name, self._id, self()['clientId'])
 
     @property
     def id(self):
@@ -27,13 +23,13 @@ class Client(KeycloakAdminBaseElement):
     @property
     def roles(self):
         from keycloak.admin.roles import ClientRoles
-        return ClientRoles(admin=self._admin, realm_name=self._realm_name, client_id=self._id)
+        return ClientRoles(admin=self._admin, realm_name=self._realm_name, client=self)
 
 
 class Clients(KeycloakAdminBase, KeycloakAdminCollection):
     _realm_name = None
     _paths = {
-        'collection': '/auth/admin/realms/{realm}/clients'
+        'collection': '/auth/admin/realms/{realm_name}/clients'
     }
     _itemclass = Client
 
@@ -50,7 +46,7 @@ class Clients(KeycloakAdminBase, KeycloakAdminCollection):
             return self.by_id(res[0]['id'])
 
     def _url_collection_params(self):
-        return {'realm': self._realm_name}
+        return {'realm_name': self._realm_name}
 
     def _url_item_params(self, data):
         return dict(
