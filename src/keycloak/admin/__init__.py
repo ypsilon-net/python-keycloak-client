@@ -25,26 +25,36 @@ class KeycloakAdminBase(object):
     def get_path(self, name, **kwargs):
         if self._paths is None:
             raise NotImplementedError()
-
         return self._paths[name].format(**kwargs)
 
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
     _params = None
+    _idents = None
 
     def __call__(self):
         # get keys
         reqparams = {}
-        for varname in PAT_VAR.findall(self._paths['self']):
-            reqparams[varname] = getattr(self, varname)
+        for varname in PAT_VAR.findall(self._paths['single']):
+            reqparams[varname] = getattr(self, '_%s' % varname)
 
         if not self._params:
             self._params = self._admin.get(
-                self._admin.get_full_url(self.get_path('self', **reqparams))
+                self._admin.get_full_url(self.get_path('single', **reqparams))
             )
         return self._params
 
+    def __repr__(self):
+        params = [
+            '%s="%s"' % (k[1:], v)
+            for k, v in self.__dict__.items()
+            if v and k.startswith('_') and k not in ['_params', '_paths', '_admin', '_paths', '_idents']
+        ]
+        if self._idents and self._params:
+            for name, key in self._idents.items():
+                params.append('%s="%s"' % (name, self().get(key)))
 
+        return '<%s object %s>' % (self.__class__.__name__, " ".join(params))
 
 class KeycloakAdmin(object):
     _realm = None
@@ -131,6 +141,9 @@ class KeycloakAdminCollection(object):
             self._itemclass(**self._url_item_params(k))
             for k in self.all(**kwargs)
         ]
+
+    def __repr__(self):
+        return repr([repr(k) for k in self()])
 
     def all(self, **kwargs):
         query = self._defaults_all_query.copy()
