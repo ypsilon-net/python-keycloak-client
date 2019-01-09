@@ -6,15 +6,15 @@ __all__ = ('Group', 'Groups',)
 
 
 class Group(KeycloakAdminBaseElement):
-    _group_id = None
+    _id = None
     _realm_name = None
     _paths = {
-        'single': '/auth/admin/realms/{realm_name}/groups/{group_id}',
+        'single': '/auth/admin/realms/{realm_name}/groups/{id}',
     }
     _idents = {'path': 'path'}
 
-    def __init__(self, realm_name, group_id, *args, **kwargs):
-        self._group_id = group_id
+    def __init__(self, realm_name, id, *args, **kwargs):
+        self._id = id
         self._realm_name = realm_name
         super(Group, self).__init__(*args, **kwargs)
 
@@ -33,13 +33,13 @@ class Group(KeycloakAdminBaseElement):
     @property
     def subGroups(self):
         return [
-            Group(params=sg, admin=self._admin, realm_name=self._realm_name, group_id=sg['id'])
+            Group(params=sg, admin=self._admin, realm_name=self._realm_name, id=sg['id'])
             for sg in self().get('subGroups')
         ]
 
     @property
     def members(self):
-        return GroupMembers(admin=self._admin, realm_name=self._realm_name, group_id=self._group_id)
+        return GroupMembers(admin=self._admin, realm_name=self._realm_name, group_id=self._id)
 
 
 
@@ -111,7 +111,7 @@ class Groups(KeycloakAdminCollection):
 
     def _url_item_params(self, data):
         return dict(
-            group_id=data['id'], admin=self._admin, realm_name=self._realm_name,
+            id=data['id'], admin=self._admin, realm_name=self._realm_name,
         )
 
 
