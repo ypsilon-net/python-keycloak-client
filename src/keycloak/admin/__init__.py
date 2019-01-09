@@ -1,6 +1,7 @@
 import abc
 import six
 import re
+import itertools
 
 
 __all__ = (
@@ -140,6 +141,15 @@ class KeycloakAdminCollection(object):
     _sort_col = None
     _sort_asc = True
     _itemclass = abc.ABCMeta
+
+    def __iter__(self, *args, **kwargs):
+        return self().__iter__(*args, **kwargs)
+
+    def __getitem__(self, *args, **kwargs):
+        return self().__getitem__(*args, **kwargs)
+
+    def __len__(self):
+        return self().__len__()
 
     def __call__(self, **kwargs):
         return [
