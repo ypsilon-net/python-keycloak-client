@@ -32,6 +32,12 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
     _params = None
     _idents = None
 
+
+    def __init__(self, params=None, *args, **kwargs):
+        super(KeycloakAdminBaseElement, self).__init__(*args, **kwargs)
+        if params:
+            self._params = params
+
     def __call__(self):
         # get keys
         reqparams = {}
@@ -138,7 +144,7 @@ class KeycloakAdminCollection(object):
 
     def __call__(self, **kwargs):
         return [
-            self._itemclass(**self._url_item_params(k))
+            self._itemclass(params=k, **self._url_item_params(k))
             for k in self.all(**kwargs)
         ]
 
