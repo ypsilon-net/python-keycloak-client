@@ -11,12 +11,25 @@ class User(KeycloakAdminBaseElement):
     _paths = {
         'single': '/auth/admin/realms/{realm_name}/users/{id}',
     }
-    _idents = {'email': 'email', 'first_name': 'firstName', 'last_name': 'lastName', 'enabled': 'enabled'}
+    _idents = {
+        'username': 'username',
+        'email': 'email',
+        'first_name': 'firstName', 'last_name': 'lastName',
+        'enabled': 'enabled'
+    }
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
         self._realm_name = realm_name
         super(User, self).__init__(*args, **kwargs)
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def username(self):
+        return self().get('username')
 
     @property
     def first_name(self):
@@ -31,9 +44,16 @@ class User(KeycloakAdminBaseElement):
         return self().get('email')
 
     @property
+    def email_verified(self):
+        return self().get('emailVerified')
+
+    @property
     def enabled(self):
         return self().get('enabled')
 
+    @property
+    def attributes(self):
+        return self().get('attributes', {})
 
     def get(self):
         res = self()
@@ -77,6 +97,11 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
 
     def by_name(self, name):
         res = self.unsorted().all(username=name)
+        if res:
+            return self.by_id(res[0]['id'])
+
+    def by_email(self, email):
+        res = self.unsorted().all(email=email)
         if res:
             return self.by_id(res[0]['id'])
 
