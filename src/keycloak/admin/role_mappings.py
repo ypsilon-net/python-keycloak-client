@@ -20,7 +20,7 @@ class RoleMappings(KeycloakAdminCollection):
         super(RoleMappings, self).__init__(*args, **kwargs)
 
     def by_client_id(self, client_id):
-        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._user_id, client_id=client_id)
+        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._user_id, client=client_id)
 
     def by_client_name(self, client_name):
         from keycloak.admin.clients import Clients
