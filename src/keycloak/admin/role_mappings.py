@@ -27,6 +27,8 @@ class RoleMappings(KeycloakAdminBase, KeycloakAdminCollection):
     def _url_collection_params(self):
         return {'realm': self._realm_name, 'id': self._user_id}
 
+    def _url_item_params(self, data):
+        return {} # TODO item-class & -handling has to be added first
 
 class ClientRoleMappings(RoleMappings):
     _available = False
@@ -71,3 +73,6 @@ class ClientRoleMappings(RoleMappings):
         if self._composite:
             return 'composite'
         return super(ClientRoleMappings, self)._url_collection_path_name()
+
+    def _url_item_params(self, data):
+        return {}  # TODO item-class & -handling has to be added first
