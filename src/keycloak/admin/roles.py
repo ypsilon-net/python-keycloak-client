@@ -114,7 +114,7 @@ class RealmRoles(Roles):
 
     def _url_item_params(self, data):
         return dict(
-            id=data['id'], admin=self._admin, realm_name=self._realm_name, role_name=data['name']
+            admin=self._admin, realm_name=self._realm_name, role_name=data['name']
         )
 
 class ClientRole(RealmRole):
@@ -130,7 +130,7 @@ class ClientRole(RealmRole):
         if isinstance(client, Client):
             self._client = client
         else:
-            self._client = Client(admin=self._admin, realm_name=self._realm_name, client_id=client)
+            self._client = Client(admin=self._admin, realm_name=self._realm_name, id=client)
 
     @property
     def _client_id(self):
@@ -151,7 +151,7 @@ class ClientRoles(RealmRoles):
         if isinstance(client, Client):
             self._client = client
         else:
-            self._client = Client(admin=self._admin, realm_name=self._realm_name, client_id=client)
+            self._client = Client(admin=self._admin, realm_name=self._realm_name, id=client)
 
     @property
     def _client_id(self):
@@ -162,7 +162,7 @@ class ClientRoles(RealmRoles):
 
     def _url_item_params(self, data):
         return dict(
-            id=data['id'], admin=self._admin, realm_name=self._realm_name, client=self._client, role_name=data['name']
+           admin=self._admin, realm_name=self._realm_name, client=self._client, role_name=data['name']
         )
 
 

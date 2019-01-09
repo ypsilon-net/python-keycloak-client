@@ -2,7 +2,6 @@ import abc
 import six
 import re
 
-
 __all__ = (
     'KeycloakAdmin',
     'KeycloakAdminBase',
@@ -156,6 +155,7 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     _sort_asc = True
     _itemclass = abc.ABCMeta
 
+
     def __iter__(self, *args, **kwargs):
         return self().__iter__(*args, **kwargs)
 
@@ -166,13 +166,31 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         return self().__len__()
 
     def __call__(self, **kwargs):
-        return [
-            self._itemclass(params=k, **self._url_item_params(k))
-            for k in self.all(**kwargs)
-        ]
+        items = self.all(**kwargs)
+
+        if isinstance(self._itemclass, dict):
+            res = []
+            for pos, itemclass in self._itemclass.items():
+                subitems = items.get(pos, [])
+                if isinstance(subitems, list):
+                    for k in subitems:
+                        res.append(itemclass(params=k, **self._url_item_params(pos, k)))
+                elif isinstance(subitems, dict):
+                    for k, v in subitems.items():
+                        res.append(itemclass(**self._url_item_params(pos, v)))
+
+            return res
+        else:
+            return [
+                self._itemclass(params=k, **self._url_item_params(k))
+                for k in items
+            ]
 
     def __repr__(self):
-        return repr([repr(k) for k in self()])
+        return '<%s %s>' % (
+            self.__class__.__name__,
+            repr([repr(k) for k in self()])
+        )
 
     def all(self, **kwargs):
         query = self._defaults_all_query.copy()
