@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection
+from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection, KeycloakAdminBaseElement
 from keycloak.helpers import to_camel_case
 
 ROLE_KWARGS = [
@@ -51,7 +51,7 @@ class Roles(KeycloakAdminBase, KeycloakAdminCollection):
         return NotImplementedError('Override to return parameters for collection-path for class')
 
 
-class Role(KeycloakAdminBase):
+class Role(KeycloakAdminBaseElement):
     _role_name = None
 
     def __init__(self, role_name, *args, **kwargs):
@@ -90,11 +90,31 @@ class Role(KeycloakAdminBase):
         )
 
 
+
+class RealmRole(Role):
+    _realm_name = None
+    _paths = {
+        'single': '/auth/admin/realms/{realm_name}/roles/{role_name}'
+    }
+
+    def __init__(self, realm_name, *args, **kwargs):
+        self._realm_name = realm_name
+        super(RealmRole, self).__init__(*args, **kwargs)
+
+    # def __repr__(self):
+    #     return '<%s object realm="%s" role="%s">' % (
+    #         self.__class__.__name__, self._realm_name, self._role_name)
+
+    def _get_path(self, name, **kwargs):
+        return self.get_path(name, realm_name=self._realm_name, **kwargs)
+
+
 class RealmRoles(Roles):
     _realm_name = None
     _paths = {
-        'collection': '/auth/admin/realms/{realm}/roles'
+        'collection': '/auth/admin/realms/{realm_name}/roles'
     }
+    _itemclass = RealmRole
 
     def __init__(self, realm_name, *args, **kwargs):
         self._realm_name = realm_name
@@ -104,51 +124,68 @@ class RealmRoles(Roles):
         return RealmRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name)
 
     def _url_collection_params(self):
-        return {'realm': self._realm_name, 'id': self._client_id}
+        return {'realm_name': self._realm_name}
 
+    def _url_item_params(self, data):
+        return dict(
+            id=data['id'], admin=self._admin, realm_name=self._realm_name, role_name=data['name']
+        )
 
-class RealmRole(Role):
-    _realm_name = None
+class ClientRole(RealmRole):
+    _client = None
     _paths = {
-        'single': '/auth/admin/realms/{realm}/roles/{role_name}'
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/roles/{role_name}'
     }
 
-    def __init__(self, realm_name, *args, **kwargs):
-        self._realm_name = realm_name
-        super(RealmRole, self).__init__(*args, **kwargs)
+    def __init__(self, client, *args, **kwargs):
+        super(ClientRole, self).__init__(*args, **kwargs)
+
+        from keycloak.admin.clients import Client
+        if isinstance(client, Client):
+            self._client = client
+        else:
+            self._client = Client(admin=self._admin, realm_name=self._realm_name, client_id=client)
+
+    @property
+    def _client_id(self):
+        return self._client.id
 
     def _get_path(self, name, **kwargs):
-        return self.get_path(name, realm=self._realm_name, **kwargs)
+        return self.get_path(
+            name, realm_name=self._realm_name, client_id=self._client_id, **kwargs
+        )
 
 
 class ClientRoles(RealmRoles):
-    _client_id = None
+    _client = None
     _paths = {
-        'collection': '/auth/admin/realms/{realm}/clients/{id}/roles'
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/roles'
     }
+    _itemclass = ClientRole
 
-    def __init__(self, client_id="no client id given", *args, **kwargs):
-        self._client_id = client_id
+    def __init__(self, client, *args, **kwargs):
         super(ClientRoles, self).__init__(*args, **kwargs)
+
+        from keycloak.admin.clients import Client
+        if isinstance(client, Client):
+            self._client = client
+        else:
+            self._client = Client(admin=self._admin, realm_name=self._realm_name, client_id=client)
+
+    @property
+    def _client_id(self):
+        return self._client.id
 
     def by_name(self, role_name):
         return ClientRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name, client_id=self._client_id)
 
     def _url_collection_params(self):
-        return {'realm': self._realm_name, 'id': self._client_id}
+        return {'realm_name': self._realm_name, 'client_id': self._client.id}
 
-
-class ClientRole(RealmRole):
-    _client_id = None
-    _paths = {
-        'single': '/auth/admin/realms/{realm}/clients/{id}/roles/{role_name}'
-    }
-
-    def __init__(self, client_id, *args, **kwargs):
-        self._client_id = client_id
-        super(ClientRole, self).__init__(*args, **kwargs)
-
-    def _get_path(self, name, **kwargs):
-        return self.get_path(
-            name, realm=self._realm_name, id=self._client_id, **kwargs
+    def _url_item_params(self, data):
+        return dict(
+            id=data['id'], admin=self._admin, realm_name=self._realm_name, client=self._client, role_name=data['name']
         )
+
+
+
