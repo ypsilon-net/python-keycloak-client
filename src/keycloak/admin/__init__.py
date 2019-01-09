@@ -35,8 +35,7 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
 
     def __init__(self, params=None, *args, **kwargs):
         super(KeycloakAdminBaseElement, self).__init__(*args, **kwargs)
-        if params:
-            self._params = params
+        self._params = params
 
     def __call__(self):
         # get keys
