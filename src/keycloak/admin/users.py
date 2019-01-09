@@ -76,11 +76,29 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
 class User(KeycloakAdminBase):
     _id = None
     _realm_name = None
+    _paths = {
+        'single': '/auth/admin/realms/{realm}/users/{id}',
+    }
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
         self._realm_name = realm_name
         super(User, self).__init__(*args, **kwargs)
+
+    def get(self):
+        res = self._admin.get(
+            url=self._admin.get_full_url(
+                self.get_path('single', realm=self._realm_name, id=self._id)
+            )
+        )
+
+        if res: # format keys
+            if 'firstName' in res:
+                res['first_name'] = res.pop('firstName')
+            if 'lastName' in res:
+                res['last_name'] = res.pop('lastName')
+
+        return res
 
     @property
     def role_mappings(self):
