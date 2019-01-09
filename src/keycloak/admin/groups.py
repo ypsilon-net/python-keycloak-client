@@ -1,4 +1,5 @@
 from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin.users import User
 from collections import OrderedDict
 
 __all__ = ('Group', 'Groups',)
@@ -35,6 +36,11 @@ class Group(KeycloakAdminBaseElement):
             Group(params=sg, admin=self._admin, realm_name=self._realm_name, group_id=sg['id'])
             for sg in self().get('subGroups')
         ]
+
+    @property
+    def members(self):
+        return GroupMembers(admin=self._admin, realm_name=self._realm_name, group_id=self._group_id)
+
 
 
 class Groups(KeycloakAdminCollection):
@@ -106,4 +112,26 @@ class Groups(KeycloakAdminCollection):
     def _url_item_params(self, data):
         return dict(
             group_id=data['id'], admin=self._admin, realm_name=self._realm_name,
+        )
+
+
+class GroupMembers(KeycloakAdminCollection):
+    _defaults_all_query = { # https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
+        'max': -1, # turns off default max (100)
+    }
+    _paths = {
+        'collection': '/auth/admin/realms/{realm_name}/groups/{group_id}/members',
+        # 'count': '/auth/admin/realms/{realm_name}/users/count',
+    }
+    _realm_name = None
+    _itemclass = User
+
+    def __init__(self, realm_name, group_id, *args, **kwargs):
+        self._realm_name = realm_name
+        self._group_id = group_id
+        super(GroupMembers, self).__init__(*args, **kwargs)
+
+    def _url_item_params(self, data):
+        return dict(
+            id=data['id'], admin=self._admin, realm_name=self._realm_name,
         )
