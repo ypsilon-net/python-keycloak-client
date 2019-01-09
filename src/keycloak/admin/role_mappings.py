@@ -10,9 +10,6 @@ class RoleMappings(KeycloakAdminBase, KeycloakAdminCollection):
     _paths = {
         'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings',
     }
-    # _itemclass = {'realmMappings': RealmRole, 'clientMappings': ClientRoleMappings}
-    #, 'clientMappings': ClientRole}
-
 
     def __init__(self, realm_name, user_id, *args, **kwargs):
         self._realm_name = realm_name
@@ -20,13 +17,13 @@ class RoleMappings(KeycloakAdminBase, KeycloakAdminCollection):
         super(RoleMappings, self).__init__(*args, **kwargs)
 
     def by_client_id(self, client_id):
-        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._user_id, client_id=client_id)
+        return ClientRoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._user_id, client=client_id)
 
     def by_client_name(self, client_name):
         from keycloak.admin.clients import Clients
         client = Clients(admin=self._admin, realm_name=self._realm_name).by_name(client_name)
         if client:
-            return self.by_client_id(client.id)
+            return self.by_client_id(client)
 
     def _url_collection_params(self):
         return {'realm_name': self._realm_name, 'user_id': self._user_id}
@@ -65,7 +62,6 @@ class ClientRoleMappings(RoleMappings):
     @property
     def _client_id(self):
         return self._client.id
-
 
     def by_available(self): # scope
         self._available = True
