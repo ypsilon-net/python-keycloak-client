@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 from keycloak.helpers import to_camel_case
 
 ROLE_KWARGS = [
@@ -16,7 +16,7 @@ ROLE_KWARGS = [
 __all__ = ('Role', 'Roles', 'RealmRole', 'RealmRoles', 'ClientRole', 'ClientRoles',)
 
 
-class Roles(KeycloakAdminBase, KeycloakAdminCollection):
+class Roles(KeycloakAdminCollection):
     def create(self, name, **kwargs):
         """
         Create new role
@@ -47,9 +47,6 @@ class Roles(KeycloakAdminBase, KeycloakAdminCollection):
     def by_name(self, role_name):
         return Role(role_name=role_name, admin=self._admin)
 
-    def _url_collection_params(self):
-        return NotImplementedError('Override to return parameters for collection-path for class')
-
 
 class Role(KeycloakAdminBaseElement):
     _role_name = None
@@ -57,9 +54,6 @@ class Role(KeycloakAdminBaseElement):
     def __init__(self, role_name, *args, **kwargs):
         self._role_name = role_name
         super(Role, self).__init__(*args, **kwargs)
-
-    def _get_path(self, name, **kwargs):
-        return NotImplementedError('Override to return matching path for class')
 
     def update(self, name, **kwargs):
         """
@@ -83,9 +77,7 @@ class Role(KeycloakAdminBaseElement):
                 payload[to_camel_case(key)] = kwargs[key]
 
         return self._admin.put(
-            url=self._admin.get_full_url(
-                self._get_path('single', role_name=self._role_name)
-            ),
+            url=self._admin.get_full_url(self.get_path_dyn('single')),
             data=json.dumps(payload)
         )
 
@@ -105,9 +97,6 @@ class RealmRole(Role):
     #     return '<%s object realm="%s" role="%s">' % (
     #         self.__class__.__name__, self._realm_name, self._role_name)
 
-    def _get_path(self, name, **kwargs):
-        return self.get_path(name, realm_name=self._realm_name, **kwargs)
-
 
 class RealmRoles(Roles):
     _realm_name = None
@@ -122,9 +111,6 @@ class RealmRoles(Roles):
 
     def by_name(self, role_name):
         return RealmRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name)
-
-    def _url_collection_params(self):
-        return {'realm_name': self._realm_name}
 
     def _url_item_params(self, data):
         return dict(
@@ -150,11 +136,6 @@ class ClientRole(RealmRole):
     def _client_id(self):
         return self._client.id
 
-    def _get_path(self, name, **kwargs):
-        return self.get_path(
-            name, realm_name=self._realm_name, client_id=self._client_id, **kwargs
-        )
-
 
 class ClientRoles(RealmRoles):
     _client = None
@@ -178,9 +159,6 @@ class ClientRoles(RealmRoles):
 
     def by_name(self, role_name):
         return ClientRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name, client_id=self._client_id)
-
-    def _url_collection_params(self):
-        return {'realm_name': self._realm_name, 'client_id': self._client.id}
 
     def _url_item_params(self, data):
         return dict(

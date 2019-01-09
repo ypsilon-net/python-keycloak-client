@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from keycloak.admin import KeycloakAdminBase, KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 
 __all__ = ('User', 'Users',)
 
@@ -55,29 +55,13 @@ class User(KeycloakAdminBaseElement):
     def attributes(self):
         return self().get('attributes', {})
 
-    def get(self):
-        res = self()
-        # res = self._admin.get(
-        #     url=self._admin.get_full_url(
-        #         self.get_path('single', realm_name=self._realm_name, id=self._id)
-        #     )
-        # )
-
-        if res: # format keys
-            if 'firstName' in res:
-                res['first_name'] = res.pop('firstName')
-            if 'lastName' in res:
-                res['last_name'] = res.pop('lastName')
-
-        return res
-
     @property
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
         return RoleMappings(admin=self._admin, realm_name=self._realm_name, user_id=self._id)
 
 
-class Users(KeycloakAdminBase, KeycloakAdminCollection):
+class Users(KeycloakAdminCollection):
     _defaults_all_query = { # https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
         'max': -1, # turns off default max (100)
     }
@@ -110,7 +94,7 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
 
     def count(self):
         return self._admin.get(
-            self._admin.get_full_url(self.get_path('count', realm_name=self._realm_name))
+            self._admin.get_full_url(self.get_path_dyn('count'))
         )
 
     def create(self, username, **kwargs):
@@ -148,11 +132,7 @@ class Users(KeycloakAdminBase, KeycloakAdminCollection):
             data=json.dumps(payload)
         )
 
-    def _url_collection_params(self):
-        return {'realm_name': self._realm_name}
-
     def _url_item_params(self, data):
         return dict(
             id=data['id'], admin=self._admin, realm_name=self._realm_name,
         )
-
