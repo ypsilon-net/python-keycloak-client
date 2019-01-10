@@ -2,7 +2,7 @@ import logging
 
 from requests.exceptions import HTTPError
 
-from keycloak.exceptions import KeycloakClientError
+from keycloak.exceptions import KeycloakClientResponseError
 
 try:
     from urllib.parse import urljoin  # noqa: F401
@@ -86,7 +86,7 @@ class KeycloakClient(object):
                 self.logger.debug(response.content)
                 self.logger.debug(response.headers)
                 self.logger.debug(response.request.headers)
-                raise KeycloakClientError(original_exc=err)
+                raise KeycloakClientResponseError(original_exc=err, response=response)
 
             try:
                 return response.json()

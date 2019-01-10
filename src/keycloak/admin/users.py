@@ -12,11 +12,26 @@ class User(KeycloakAdminBaseElement):
         'single': '/auth/admin/realms/{realm_name}/users/{id}',
     }
     _idents = {
-        'username': 'username',
+        'attributes': 'attributes',
+        'credentials': 'credentials',
         'email': 'email',
-        'first_name': 'firstName', 'last_name': 'lastName',
-        'enabled': 'enabled'
+        'email_verified': 'emailVerified',
+        'enabled': 'enabled',
+        'first_name': 'firstName',
+        'last_name': 'lastName',
+        'username': 'username',
     }
+
+    @classmethod
+    def gen_payload(cls, **kwargs):
+        res = {}
+        for key, val in kwargs.items():
+            if key not in cls._idents:
+                continue
+            if key == 'credentials':
+                val = [val]
+            res[cls._idents[key]] = val
+        return res
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
@@ -26,6 +41,10 @@ class User(KeycloakAdminBaseElement):
     @property
     def id(self):
         return self._id
+
+    @property
+    def credentials(self):
+        return self().get('credentials', [])
 
     @property
     def username(self):
@@ -59,6 +78,12 @@ class User(KeycloakAdminBaseElement):
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
         return RoleMappings(admin=self._admin, realm_name=self._realm_name, user=self)
+
+    def update(self, **kwargs):
+        return self._admin.put(
+            url=self._admin.get_full_url(self.get_path_dyn('single')),
+            data=json.dumps(self.gen_payload(**kwargs))
+        )
 
 
 class Users(KeycloakAdminCollection):
@@ -97,7 +122,7 @@ class Users(KeycloakAdminCollection):
             self._admin.get_full_url(self.get_path_dyn('count'))
         )
 
-    def create(self, username, **kwargs):
+    def create(self, **kwargs):
         """
         Create a user in Keycloak
 
@@ -110,26 +135,13 @@ class Users(KeycloakAdminCollection):
         :param str email: (optional)
         :param boolean enabled: (optional)
         """
-        payload = OrderedDict(username=username)
 
-        if 'credentials' in kwargs:
-            payload['credentials'] = [kwargs['credentials']]
-
-        if 'first_name' in kwargs:
-            payload['firstName'] = kwargs['first_name']
-
-        if 'last_name' in kwargs:
-            payload['lastName'] = kwargs['last_name']
-
-        if 'email' in kwargs:
-            payload['email'] = kwargs['email']
-
-        if 'enabled' in kwargs:
-            payload['enabled'] = kwargs['enabled']
+        if 'username' not in kwargs or not kwargs['username'].strip():
+            raise ValueError('Username is required')
 
         return self._admin.post(
             url=self._url_collection(),
-            data=json.dumps(payload)
+            data=json.dumps(User.gen_payload(**kwargs))
         )
 
     def _url_item_params(self, data):
