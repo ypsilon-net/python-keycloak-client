@@ -42,7 +42,7 @@ class KeycloakAdminBase(object):
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
     _params = None
-    _idents = None
+    _idents = {}
 
 
     def __init__(self, params=None, *args, **kwargs):
@@ -58,7 +58,7 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
 
     def __repr__(self):
         params = [
-            '%s="%s"' % (k[1:], v)
+            '%s=%s' % (k[1:], v)
             for k, v in self.__dict__.items()
             if v and k.startswith('_') and k not in ['_params', '_paths', '_admin', '_paths', '_idents']
         ]
@@ -66,13 +66,33 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
             for name, key in self._idents.items():
                 params.append('%s="%s"' % (name, self().get(key)))
 
-        return '<%s object %s>' % (self.__class__.__name__, " ".join(params))
+        return '<%s(%s)>' % (self.__class__.__name__, " ".join(params))
+
+
+    def __getattr__(self, attr):
+        if attr in self._idents:
+            # also provide property attributes for json payload elements
+            # if mapping is defined in _idents
+            json_key = self._idents[attr]
+            if not self._params:
+                self()
+            if not json_key in self._params:
+                raise ValueError('json data of \'%s\' does not contain \'%s\'' % (
+                    self.__class__.__name__, json_key
+                ))
+            return self._params[json_key]
+
+        else:
+            raise AttributeError('\'%s\' object has no attribute \'%s\'%s' % (
+                self.__class__.__name__, attr,
+                self._idents and ', only [%s] additional avalaible from json payload' % (
+                    ", ".join(self._idents.keys()), ) or ''
+            ))
 
     def get(self):
         res = self()
-        if self._idents:
-            for key, kc_key in self._idents.items():
-                res[key] = res.pop(kc_key) if kc_key in res else None
+        for key, kc_key in self._idents.items():
+            res[key] = res.pop(kc_key) if kc_key in res else None
         return res
 
 class KeycloakAdmin(object):
@@ -163,6 +183,8 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         return self().__getitem__(*args, **kwargs)
 
     def __len__(self):
+        if self._paths.get('count'):
+            return self.count()
         return self().__len__()
 
     def __call__(self, **kwargs):
@@ -187,9 +209,9 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             ]
 
     def __repr__(self):
-        return '<%s %s>' % (
+        return '<%s ([%s])>' % (
             self.__class__.__name__,
-            repr([repr(k) for k in self()])
+            ", ".join([repr(k) for k in self()])
         )
 
     def all(self, **kwargs):
@@ -204,6 +226,16 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             if sort:
                 res.sort(key=lambda v: v.lower()) # case insensitive sorting
         return res
+
+    def count(self):
+        if self._paths.get('count'):
+            return self._admin.get(
+                self._admin.get_full_url(self.get_path_dyn('count'))
+            )
+        raise AttributeError('_paths definition of "%s" does not contain "count"' % (
+            self.__cls__.__name__
+        ))
+
 
     def sorted_by(self, col, asc=True):  # scope
         self._sort_col = col
