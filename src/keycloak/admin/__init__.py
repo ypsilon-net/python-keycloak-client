@@ -114,6 +114,11 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
             data=json.dumps(self.gen_payload(**kwargs))
         )
 
+    def delete(self):
+        return self._admin.delete(
+            self._admin.get_full_url(self.get_path_dyn('single'))
+        )
+
 
 class KeycloakAdmin(object):
     _realm = None
@@ -167,9 +172,10 @@ class KeycloakAdmin(object):
             url=url, headers=self._add_auth_header(headers=headers)
         )
 
-    #
-    # def delete(self, url, headers, **kwargs):
-    #     return self.session.delete(url, headers=headers, **kwargs)
+    def delete(self, url, headers=None, **kwargs):
+        return self._realm.client.delete(
+            url=url, headers=self._add_auth_header(headers=headers)
+        )
 
     def _add_auth_header(self, headers=None):
         if callable(self._token):
