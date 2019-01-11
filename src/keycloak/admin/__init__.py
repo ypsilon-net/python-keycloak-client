@@ -1,6 +1,7 @@
 import abc
-import six
+import json
 import re
+import six
 
 __all__ = (
     'KeycloakAdmin',
@@ -44,6 +45,18 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
     _params = None
     _idents = None
 
+    @classmethod
+    def gen_payload(cls, **kwargs):
+        res = {}
+        for key, val in kwargs.items():
+            if key not in cls._idents:
+                continue
+            res[cls._idents[key]] = cls._gen_payload_format(key, val)
+        return res
+
+    @classmethod
+    def _gen_payload_format(cls, key, val):
+        return val
 
     def __init__(self, params=None, *args, **kwargs):
         super(KeycloakAdminBaseElement, self).__init__(*args, **kwargs)
@@ -74,6 +87,13 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
             for key, kc_key in self._idents.items():
                 res[key] = res.pop(kc_key) if kc_key in res else None
         return res
+
+    def update(self, **kwargs):
+        return self._admin.put(
+            url=self._admin.get_full_url(self.get_path_dyn('single')),
+            data=json.dumps(self.gen_payload(**kwargs))
+        )
+
 
 class KeycloakAdmin(object):
     _realm = None
@@ -239,3 +259,9 @@ class KeycloakAdminCollection(KeycloakAdminBase):
 
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
+
+    def create(self, **kwargs):
+        return self._admin.post(
+            url=self._url_collection(),
+            data=json.dumps(self._itemclass.gen_payload(**kwargs))
+        )

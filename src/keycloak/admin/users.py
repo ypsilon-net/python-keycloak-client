@@ -1,5 +1,3 @@
-import json
-from collections import OrderedDict
 from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 
 __all__ = ('User', 'Users',)
@@ -23,15 +21,9 @@ class User(KeycloakAdminBaseElement):
     }
 
     @classmethod
-    def gen_payload(cls, **kwargs):
-        res = {}
-        for key, val in kwargs.items():
-            if key not in cls._idents:
-                continue
-            if key == 'credentials':
-                val = [val]
-            res[cls._idents[key]] = val
-        return res
+    def _gen_payload_format(cls, key, val):
+        if key == 'credentials':
+            return [val]
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
@@ -78,12 +70,6 @@ class User(KeycloakAdminBaseElement):
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
         return RoleMappings(admin=self._admin, realm_name=self._realm_name, user=self)
-
-    def update(self, **kwargs):
-        return self._admin.put(
-            url=self._admin.get_full_url(self.get_path_dyn('single')),
-            data=json.dumps(self.gen_payload(**kwargs))
-        )
 
 
 class Users(KeycloakAdminCollection):
@@ -139,10 +125,7 @@ class Users(KeycloakAdminCollection):
         if 'username' not in kwargs or not kwargs['username'].strip():
             raise ValueError('Username is required')
 
-        return self._admin.post(
-            url=self._url_collection(),
-            data=json.dumps(User.gen_payload(**kwargs))
-        )
+        return super(Users, self).create(**kwargs)
 
     def _url_item_params(self, data):
         return dict(
