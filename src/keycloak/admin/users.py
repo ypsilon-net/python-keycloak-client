@@ -35,38 +35,6 @@ class User(KeycloakAdminBaseElement):
         return self._id
 
     @property
-    def credentials(self):
-        return self().get('credentials', [])
-
-    @property
-    def username(self):
-        return self().get('username')
-
-    @property
-    def first_name(self):
-        return self().get('firstName')
-
-    @property
-    def last_name(self):
-        return self().get('lastName')
-
-    @property
-    def email(self):
-        return self().get('email')
-
-    @property
-    def email_verified(self):
-        return self().get('emailVerified')
-
-    @property
-    def enabled(self):
-        return self().get('enabled')
-
-    @property
-    def attributes(self):
-        return self().get('attributes', {})
-
-    @property
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
         return RoleMappings(admin=self._admin, realm_name=self._realm_name, user=self)
@@ -99,14 +67,6 @@ class Users(KeycloakAdminCollection):
         res = self.unsorted().all(email=email)
         if res:
             return self.by_id(res[0]['id'])
-
-    def __len__(self):
-        return self.count()
-
-    def count(self):
-        return self._admin.get(
-            self._admin.get_full_url(self.get_path_dyn('count'))
-        )
 
     def create(self, **kwargs):
         """
