@@ -16,6 +16,7 @@ class KeycloakClient(object):
     _server_url = None
     _session = None
     _headers = None
+    _response_headers = None # headers of last response
 
     def __init__(self, server_url, headers=None, logger=None):
         """
@@ -36,6 +37,10 @@ class KeycloakClient(object):
         self.logger = logger
         self._server_url = server_url
         self._headers = headers or {}
+
+    @property
+    def response_headers(self):
+        return self._response_headers
 
     @property
     def server_url(self):
@@ -80,6 +85,8 @@ class KeycloakClient(object):
 
     def _handle_response(self, response):
         with response:
+            self._response_headers = response.headers
+
             try:
                 response.raise_for_status()
             except HTTPError as err:

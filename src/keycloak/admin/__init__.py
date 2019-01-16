@@ -121,10 +121,11 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
 
 
 class KeycloakAdmin(object):
-    _realm = None
     _paths = {
         'root': '/'
     }
+    _realm = None
+    _response_headers = None # headers of last response
     _token = None
 
     def __init__(self, realm):
@@ -132,6 +133,10 @@ class KeycloakAdmin(object):
         :param keycloak.realm.KeycloakRealm realm:
         """
         self._realm = realm
+
+    @property
+    def response_headers(self):
+        return self._response_headers
 
     def root(self):
         return self.get(
@@ -158,24 +163,24 @@ class KeycloakAdmin(object):
         return Realms(admin=self)
 
     def post(self, url, data, headers=None, **kwargs):
-        return self._realm.client.post(
-            url=url, data=data, headers=self._add_auth_header(headers=headers)
-        )
+        return self._req('post', url, headers, data)
 
     def put(self, url, data, headers=None, **kwargs):
-        return self._realm.client.put(
-            url=url, data=data, headers=self._add_auth_header(headers=headers)
-        )
+        return self._req('put', url, headers, data)
 
     def get(self, url, headers=None, **kwargs):
-        return self._realm.client.get(
-            url=url, headers=self._add_auth_header(headers=headers)
-        )
+        return self._req('get', url, headers)
 
     def delete(self, url, headers=None, **kwargs):
-        return self._realm.client.delete(
-            url=url, headers=self._add_auth_header(headers=headers)
-        )
+        return self._req('delete', url, headers)
+
+    def _req(self, method, url, headers=None, data=None, **kwargs): # request & setting response-headers
+        opts = dict(url=url, headers=self._add_auth_header(headers))
+        if data is not None:
+            opts['data'] = data
+        res = getattr(self._realm.client, method)(**opts) # dynamic call
+        self._response_headers = self._realm.client.response_headers
+        return res
 
     def _add_auth_header(self, headers=None):
         if callable(self._token):
@@ -298,8 +303,20 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
 
-    def create(self, **kwargs):
-        return self._admin.post(
+    def create(self, return_id=False, **kwargs):
+        res = self._admin.post(
             url=self._url_collection(),
             data=json.dumps(self._itemclass.gen_payload(**kwargs))
         )
+        if return_id:
+            res = self._create_extract_id()
+        return res
+
+    def _create_extract_id(self):
+        # extract id of created keycloak-object from location-url of response-headers
+        # TODO only tested on creating an user; have to be also checked on other object-types
+        url = self._url_collection()
+        if self._admin.response_headers \
+                and 'Location' in self._admin.response_headers \
+                and re.match("^%s" % url, self._admin.response_headers['Location']):
+            return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
