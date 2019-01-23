@@ -80,8 +80,8 @@ class KeycloakClient(object):
             self.session.get(url, headers=headers or {}, params=kwargs)
         )
 
-    def delete(self, url, headers, **kwargs):
-        return self.session.delete(url, headers=headers, **kwargs)
+    def delete(self, url, headers, data=None, **kwargs):
+        return self.session.delete(url, headers=headers, data=data, **kwargs)
 
     def _handle_response(self, response):
         with response:

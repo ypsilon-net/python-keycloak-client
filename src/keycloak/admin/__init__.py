@@ -187,8 +187,8 @@ class KeycloakAdmin(object):
     def get(self, url, headers=None, **kwargs):
         return self._req('get', url, headers)
 
-    def delete(self, url, headers=None, **kwargs):
-        return self._req('delete', url, headers)
+    def delete(self, url, headers=None, data=None, **kwargs):
+        return self._req('delete', url, headers, data)
 
     def _req(self, method, url, headers=None, data=None, **kwargs): # request & setting response-headers
         opts = dict(url=url, headers=self._add_auth_header(headers))
@@ -320,7 +320,7 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         return 'collection'
 
     def create(self, return_id=False, *args, **kwargs):
-        if isinstance(return_id, list): # TODO find a better way of taking data of multiple values
+        if isinstance(return_id, list): # TODO find a better way of taking multiple data-values
             args = return_id
             return_id = False
         res = self._admin.post(
@@ -339,3 +339,11 @@ class KeycloakAdminCollection(KeycloakAdminBase):
                 and 'Location' in self._admin.response_headers \
                 and re.match("^%s" % url, self._admin.response_headers['Location']):
             return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
+
+    def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
+        if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
+            args = args[0]
+        return self._admin.delete(
+            url=self._url_collection(),
+            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
+        )
