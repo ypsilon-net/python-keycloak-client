@@ -11,7 +11,7 @@ class KeycloakClientResponseError(KeycloakClientError):
     def __init__(self, response, **kwargs):
         self.response = response
 
-        if hasattr(response, 'content'):
+        if hasattr(response, 'content') and response.content:
             import json
             content = json.loads(response.content)
             if 'errorMessage' in content:

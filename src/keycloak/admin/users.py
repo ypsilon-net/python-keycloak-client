@@ -21,10 +21,10 @@ class User(KeycloakAdminBaseElement):
     }
 
     @classmethod
-    def _gen_payload_format(cls, key, val):
+    def _gen_payload_single_format(cls, key, val):
         if key == 'credentials':
             return [val]
-        return super(User, cls)._gen_payload_format(key, val)
+        return super(User, cls)._gen_payload_single_format(key, val)
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id

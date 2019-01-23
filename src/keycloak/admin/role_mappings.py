@@ -1,4 +1,4 @@
-from keycloak.admin import KeycloakAdminCollection
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 from keycloak.admin.roles import RealmRole, ClientRole, ClientRoles
 
 __all__ = ('RoleMappings', 'ClientRoleMappings',)
@@ -45,6 +45,13 @@ class RoleMappings(KeycloakAdminCollection):
             )
 
 
+class ClientRoleMapping(ClientRole):
+    _gen_payload_is_multiple = True
+    _paths = {
+        'single': '' # TODO define correct path
+    }
+
+
 class ClientRoleMappings(RoleMappings):
     _available = False
     _client = None
@@ -54,7 +61,7 @@ class ClientRoleMappings(RoleMappings):
         'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}',
         'composite': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/composite',
     }
-    _itemclass = ClientRole
+    _itemclass = ClientRoleMapping
 
     def __init__(self, client, *args, **kwargs):
         super(ClientRoleMappings, self).__init__(*args, **kwargs)
@@ -80,9 +87,6 @@ class ClientRoleMappings(RoleMappings):
     @property
     def client_id(self):
         return self._client_id
-
-    def create(self):
-        pass
 
     @property
     def roles(self):

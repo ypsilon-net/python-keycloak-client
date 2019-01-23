@@ -42,20 +42,36 @@ class KeycloakAdminBase(object):
 
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
+    _gen_payload_is_multiple = False
     _params = None
     _idents = {}
 
     @classmethod
-    def gen_payload(cls, **kwargs):
-        res = {}
-        for key, val in kwargs.items():
-            if key not in cls._idents:
-                continue
-            res[cls._idents[key]] = cls._gen_payload_format(key, val)
+    def gen_payload(cls, *args, **kwargs):
+        if cls._gen_payload_is_multiple:
+            return cls._gen_payload_multiple(*args, **kwargs)
+        else:
+            return cls._gen_payload_single(**kwargs)
+
+    @classmethod
+    def _gen_payload_multiple(cls, *args, **kwargs):
+        res = []
+        for data in args or [kwargs]:
+            res.append(cls._gen_payload_single(**data))
         return res
 
     @classmethod
-    def _gen_payload_format(cls, key, val):
+    def _gen_payload_single(cls, **kwargs):
+        res = {}
+        for key, val in kwargs.items():
+            if cls._idents and key not in cls._idents:
+                continue
+            fkey = cls._idents[key] if key in cls._idents else key
+            res[fkey] = cls._gen_payload_single_format(key, val)
+        return res
+
+    @classmethod
+    def _gen_payload_single_format(cls, key, val):
         return val
 
     def __init__(self, params=None, *args, **kwargs):
@@ -303,10 +319,13 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
 
-    def create(self, return_id=False, **kwargs):
+    def create(self, return_id=False, *args, **kwargs):
+        if isinstance(return_id, list): # TODO find a better way of taking data of multiple values
+            args = return_id
+            return_id = False
         res = self._admin.post(
             url=self._url_collection(),
-            data=json.dumps(self._itemclass.gen_payload(**kwargs))
+            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
         )
         if return_id:
             res = self._create_extract_id()
