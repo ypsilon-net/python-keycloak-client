@@ -158,7 +158,7 @@ class ClientRoles(RealmRoles):
         return self._client.id
 
     def by_name(self, role_name):
-        return ClientRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name, client_id=self._client_id)
+        return ClientRole(role_name=role_name, admin=self._admin, realm_name=self._realm_name, client=self._client)
 
     def _url_item_params(self, data):
         return dict(
