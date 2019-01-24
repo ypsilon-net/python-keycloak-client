@@ -10,7 +10,9 @@ __all__ = (
     'KeycloakAdminCollection',
 )
 
+
 PAT_VAR = re.compile('{([\_\w]+)}')
+
 
 class KeycloakAdminBase(object):
     _admin = None
@@ -25,7 +27,13 @@ class KeycloakAdminBase(object):
     def get_path(self, name, **kwargs):
         if self._paths is None:
             raise NotImplementedError()
-        return self._paths[name].format(**kwargs)
+        try:
+            return self._paths[name].format(**kwargs)
+        except KeyError as e:
+            raise KeyError('%s with kwargs %s raised KeyError %s for path %s' % (
+                self.__class__.__name__, kwargs,  str(e), name
+            ))
+
 
     def get_path_dyn(self, name, **kwargs): # get path with dynamic path-arguments on member-vars
         if self._paths is None:
@@ -125,10 +133,12 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
         return res
 
     def update(self, **kwargs):
-        return self._admin.put(
+        res = self._admin.put(
             url=self._admin.get_full_url(self.get_path_dyn('single')),
             data=json.dumps(self.gen_payload(**kwargs))
         )
+        self._params = None
+        return res
 
     def delete(self):
         return self._admin.delete(
@@ -243,11 +253,19 @@ class KeycloakAdminCollection(KeycloakAdminBase):
                 subitems = items.get(pos, [])
                 if isinstance(subitems, list):
                     for k in subitems:
-                        res.append(itemclass(params=k, **self._url_item_params(pos, k)))
+                        res.append(itemclass(params=k, **self._url_item_params(k, pos)))
                 elif isinstance(subitems, dict):
                     for k, v in subitems.items():
-                        res.append(itemclass(**self._url_item_params(pos, v)))
+                        res.append(itemclass(**self._url_item_params(v, pos)))
 
+            return res
+        elif isinstance(self._itemclass, tuple):
+            lookupKey, mapping = self._itemclass
+            res = []
+            for k in items:
+                itemclass = mapping.get(k.get(lookupKey), mapping[None])
+                item = itemclass(**self._url_item_params(k, itemclass))
+                res.append(item)
             return res
         else:
             return [

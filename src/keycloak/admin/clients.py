@@ -1,7 +1,6 @@
 from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 
-__all__ = ('Client', 'Clients',)
-
+__all__ = ('Client', 'Clients', 'ResourceServer')
 
 class Client(KeycloakAdminBaseElement):
     _id = None
@@ -24,6 +23,11 @@ class Client(KeycloakAdminBaseElement):
     def roles(self):
         from keycloak.admin.roles import ClientRoles
         return ClientRoles(admin=self._admin, realm_name=self._realm_name, client=self)
+
+    @property
+    def resourceServer(self):
+        from keycloak.admin.resource_server import ResourceServer
+        return ResourceServer(admin=self._admin, realm_name=self._realm_name, client=self)
 
 
 class Clients(KeycloakAdminCollection):
