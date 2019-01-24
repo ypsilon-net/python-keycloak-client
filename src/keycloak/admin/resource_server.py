@@ -2,7 +2,24 @@ from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 from keycloak.admin.clients import Client
 from copy import copy
 
-__all__ = ('ResourceServer', 'Resources')
+__all__ = (
+    'ResourceServer',
+    'Resources',
+    'Resource',
+    'Scopes',
+    'Scope',
+    'Policies',
+    # 'Policy',
+    'RolePolicy',
+    'GroupPolicy',
+    'Permissions',
+    # 'Permission',
+    'ScopePermission',
+    'ResourcePermission',
+    'AssociatedPolicies',
+    'AssociatedResources',
+    'AssociatedScopes',
+)
 
 class ResurcesServerSubCollection(KeycloakAdminCollection):
     _realm_name = None
@@ -58,8 +75,6 @@ class ResurcesServerSubCollection(KeycloakAdminCollection):
     def _url_item_params(self, data, itemclass=None):
         if itemclass is None:
             itemclass = self._itemclass
-        #printitemclass._idents()
-        print ('class: %s idents: %s' % (itemclass, itemclass._idents))
         return dict(
             admin=self._admin, realm_name=self._realm_name, client=self._client,
             id=data[itemclass._idents['id']],
@@ -192,6 +207,33 @@ class Policies(ResurcesServerSubCollection):
         'group': GroupPolicy,
     })
 
+class AssociatedBase(KeycloakAdminCollection):
+    _permission = None
+
+    def __init__(self, permission, *args, **kwargs):
+        self._permission = permission
+        super(AssociatedBase, self).__init__(*args, **kwargs)
+
+    @property
+    def _permission_id(self):
+        return self._permission.id
+
+
+class AssociatedPolicies(Policies, AssociatedBase):
+    _paths = {
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/associatedPolicies',
+    }
+
+class AssociatedResources(Resources, AssociatedBase):
+    _paths = {
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/resources',
+    }
+
+class AssociatedScopes(Scopes, AssociatedBase):
+    _paths = {
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/scopes',
+    }
+
 
 class Permission(ResurcesServerSubElement):
     _paths = {
@@ -205,6 +247,17 @@ class Permission(ResurcesServerSubElement):
         'logic': 'logic',
         'type': 'type',
     }
+    # def __init__(self, *args, **kwargs):
+    #     super(Permission, self).__init__(*args, **kwargs)
+
+    # @property
+    def policies(self):
+        return AssociatedPolicies(admin=self._admin, realm_name=self._realm_name, client=self._client, permission=self)
+
+    # @property
+    def resources(self):
+        return AssociatedResources(admin=self._admin, realm_name=self._realm_name, client=self._client, permission=self)
+
 
 class ResourcePermission(Permission):
     _paths = {
@@ -220,9 +273,13 @@ class ScopePermission(Permission):
     _paths = {
         'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/{id}',
     }
-    # _idents = {
 
-    # }.update(Permission._idents)
+    def scopes(self):
+        return AssociatedScopes(admin=self._admin, realm_name=self._realm_name, client=self._client, permission=self)
+
+    # def __init__(self, *args, **kwargs):
+    #     super(ScopePermission, self).__init__(*args, **kwargs)
+
 
 class Permissions(ResurcesServerSubCollection):
     _paths = {
