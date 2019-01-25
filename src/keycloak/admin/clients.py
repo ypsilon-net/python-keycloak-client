@@ -25,7 +25,7 @@ class Client(KeycloakAdminBaseElement):
         return ClientRoles(admin=self._admin, realm_name=self._realm_name, client=self)
 
     @property
-    def resourceServer(self):
+    def resource_server(self):
         from keycloak.admin.resource_server import ResourceServer
         return ResourceServer(admin=self._admin, realm_name=self._realm_name, client=self)
 

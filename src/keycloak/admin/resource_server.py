@@ -110,7 +110,7 @@ class ResurcesServerSubElement(KeycloakAdminBaseElement):
 
 class Resource(ResurcesServerSubElement):
     _paths = {
-        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource/{id}'
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource/{id}'
     }
     _idents = {
         'name': 'name',
@@ -119,6 +119,8 @@ class Resource(ResurcesServerSubElement):
         'owner_managed_access': 'ownerManagedAccess',
         'owner': 'owner',
         'attributes': 'attributes',
+        'uri': 'uri',
+        'type': 'type',
     }
 
 

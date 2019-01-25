@@ -122,6 +122,14 @@ class ClientRole(RealmRole):
     _paths = {
         'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/roles/{role_name}'
     }
+    _idents = {
+        'id' : 'id',
+        'name': 'name',
+        'description': 'description',
+        'composite': 'composite',
+        'container_id': 'containerId',
+        'client_role': 'clientRole',
+    }
 
     def __init__(self, client, *args, **kwargs):
         super(ClientRole, self).__init__(*args, **kwargs)
