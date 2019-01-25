@@ -242,7 +242,6 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     _sort_asc = True
     _itemclass = abc.ABCMeta
 
-
     def __iter__(self, *args, **kwargs):
         return self().__iter__(*args, **kwargs)
 
@@ -361,11 +360,7 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             args = return_id
             return_id = False
 
-        # if isinstance(self._itemclass, tuple):
-        #     lookupKey, mapping = self._itemclass
-        #     itemclass = mapping.get(kwargs.get(lookupKey), mapping[None])
-        # else:
-        #     itemclass = self._itemclass
+
         itemclass = self._get_itemclass(**kwargs)
         data = itemclass.gen_payload(*args, **kwargs)
 
@@ -373,7 +368,7 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         if self._paths.get(itemclass):
             url = self._url_collection(itemclass)
 
-        print(data)
+        # print(data)
         res = self._admin.post(
             url=url,
             data=json.dumps(data)
@@ -391,10 +386,38 @@ class KeycloakAdminCollection(KeycloakAdminBase):
                 and re.match("^%s" % url, self._admin.response_headers['Location']):
             return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
 
-    def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
+
+class KeycloakAdminMapping(KeycloakAdminCollection):
+
+    def create(self, **kwargs):
+        self.append([kwargs])
+
+    def append(self, item):
+        self.extend([item])
+
+    def extend(self, items):
+        data = [
+            isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
+            for d in items
+        ]
+
+        url = self._url_collection()
+        # print('%s -> %s' % (url, data))
+        res = self._admin.post(
+            url=url,
+            data=json.dumps(data)
+        )
+
+    def delete(self, *args): # working only on requests with multiple data-structure
         if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
             args = args[0]
+
+        # data = self._itemclass.gen_payload(*args, **kwargs)
+        data = [
+            isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
+            for d in args
+        ]
         return self._admin.delete(
             url=self._url_collection(),
-            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
+            data=json.dumps(data)
         )
