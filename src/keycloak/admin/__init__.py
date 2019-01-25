@@ -2,6 +2,7 @@ import abc
 import json
 import re
 import six
+from copy import copy
 
 __all__ = (
     'KeycloakAdmin',
@@ -25,6 +26,7 @@ class KeycloakAdminBase(object):
         self._admin = admin
 
     def get_path(self, name, **kwargs):
+        # print('serlf: %s self._paths %s ' % (self, self._paths))
         if self._paths is None:
             raise NotImplementedError()
         try:
@@ -33,7 +35,6 @@ class KeycloakAdminBase(object):
             raise KeyError('%s with kwargs %s raised KeyError %s for path %s' % (
                 self.__class__.__name__, kwargs,  str(e), name
             ))
-
 
     def get_path_dyn(self, name, **kwargs): # get path with dynamic path-arguments on member-vars
         if self._paths is None:
@@ -51,6 +52,7 @@ class KeycloakAdminBase(object):
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
     _gen_payload_is_multiple = False
+    _gen_payload_full_on_update = True
     _params = None
     _idents = {}
 
@@ -133,9 +135,17 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
         return res
 
     def update(self, **kwargs):
+
+        updatedata=self.gen_payload(**kwargs)
+        if self._gen_payload_full_on_update:
+            data = copy(self())
+            data.update(updatedata)
+        else:
+            data = updatedata
+
         res = self._admin.put(
             url=self._admin.get_full_url(self.get_path_dyn('single')),
-            data=json.dumps(self.gen_payload(**kwargs))
+            data=json.dumps(data)
         )
         self._params = None
         return res
@@ -263,7 +273,8 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             lookupKey, mapping = self._itemclass
             res = []
             for k in items:
-                itemclass = mapping.get(k.get(lookupKey), mapping[None])
+                itemclass = self._get_itemclass(**k)
+                # itemclass = mapping.get(k.get(lookupKey), mapping[None])
                 item = itemclass(**self._url_item_params(k, itemclass))
                 res.append(item)
             return res
@@ -320,9 +331,9 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         self._sort_col = None
         self._sort_asc = True
 
-    def _url_collection(self, **kwargs): # TODO generalize?
+    def _url_collection(self, target=None, **kwargs): # TODO generalize?
         params = self._url_collection_params() or {} # path-params
-        url = self._admin.get_full_url(self.get_path_dyn(self._url_collection_path_name(), **params))
+        url = self._admin.get_full_url(self.get_path_dyn(target or self._url_collection_path_name(), **params))
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
@@ -337,13 +348,35 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
 
+    def _get_itemclass(self, **kwargs):
+        if isinstance(self._itemclass, tuple):
+            lookupKey, mapping = self._itemclass
+            itemclass = mapping.get(kwargs.get(lookupKey), mapping[None])
+        else:
+            itemclass = self._itemclass
+        return itemclass
+
     def create(self, return_id=False, *args, **kwargs):
         if isinstance(return_id, list): # TODO find a better way of taking multiple data-values
             args = return_id
             return_id = False
+
+        # if isinstance(self._itemclass, tuple):
+        #     lookupKey, mapping = self._itemclass
+        #     itemclass = mapping.get(kwargs.get(lookupKey), mapping[None])
+        # else:
+        #     itemclass = self._itemclass
+        itemclass = self._get_itemclass(**kwargs)
+        data = itemclass.gen_payload(*args, **kwargs)
+
+        url = self._url_collection()
+        if self._paths.get(itemclass):
+            url = self._url_collection(itemclass)
+
+        print(data)
         res = self._admin.post(
-            url=self._url_collection(),
-            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
+            url=url,
+            data=json.dumps(data)
         )
         if return_id:
             res = self._create_extract_id()
