@@ -319,15 +319,17 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
 
-    def create(self, return_id=False, *args, **kwargs):
-        if isinstance(return_id, list): # TODO find a better way of taking multiple data-values
-            args = return_id
-            return_id = False
+    def create(self, *args, **kwargs):
+        if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
+            args = args[0]
         res = self._admin.post(
             url=self._url_collection(),
             data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
         )
-        if return_id:
+        if self._itemclass._gen_payload_is_multiple:
+            pass # TODO implement to get instances of given itemclass
+        else:
+            # TODO extend to get instance of given itemclass
             res = self._create_extract_id()
         return res
 
