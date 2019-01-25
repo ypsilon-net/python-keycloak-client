@@ -34,7 +34,7 @@ class RoleMappings(KeycloakAdminCollection):
         if client:
             return self.by_client_id(client)
 
-    def _url_item_params(self, pos, data):
+    def _url_item_params(self, data, pos):
         if pos == 'realmMappings':
             return dict(
                 role_name=data['name'], admin=self._admin, realm_name=self._realm_name

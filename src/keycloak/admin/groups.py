@@ -59,12 +59,29 @@ class Groups(KeycloakAdminCollection):
         super(Groups, self).__init__(*args, **kwargs)
 
     def by_id(self, group_id):
-        return Groups(admin=self._admin, realm_name=self._realm_name, group_id=group_id)
+        return Group(admin=self._admin, realm_name=self._realm_name, id=group_id)
 
-    # def by_name(self, name):
-    #     res = self.unsorted().all(username=name)
-    #     if res:
-    #         return self.by_id(res[0]['id'])
+
+    def _by_param(self, param, key):
+        res = self.unsorted().all(**{key: param})
+        for group in res or []:
+            # print ('"%s" ? "%s" -> %s' % (group.get(key), param, group))
+            if group.get('name') == param:
+                return self.by_id(group['id'])
+            for subgroup in group.get('subGroups') or []:
+                # print ('"%s" ? "%s" -> %s' % (subgroup.get(key), param, subgroup))
+                if subgroup.get(key) == param:
+                    return self.by_id(subgroup['id'])
+
+
+            # return self.by_id(res[0]['id'])
+
+    def by_name(self, name):
+        return self._by_param(name, 'name')
+
+    def by_path(self, path):
+        return self._by_param(path, 'path')
+
 
     def __len__(self):
         return self.count()

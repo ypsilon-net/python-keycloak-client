@@ -2,6 +2,7 @@ import abc
 import json
 import re
 import six
+from copy import copy
 
 __all__ = (
     'KeycloakAdmin',
@@ -10,7 +11,9 @@ __all__ = (
     'KeycloakAdminCollection',
 )
 
+
 PAT_VAR = re.compile('{([\_\w]+)}')
+
 
 class KeycloakAdminBase(object):
     _admin = None
@@ -23,9 +26,15 @@ class KeycloakAdminBase(object):
         self._admin = admin
 
     def get_path(self, name, **kwargs):
+        # print('serlf: %s self._paths %s ' % (self, self._paths))
         if self._paths is None:
             raise NotImplementedError()
-        return self._paths[name].format(**kwargs)
+        try:
+            return self._paths[name].format(**kwargs)
+        except KeyError as e:
+            raise KeyError('%s with kwargs %s raised KeyError %s for path %s' % (
+                self.__class__.__name__, kwargs,  str(e), name
+            ))
 
     def get_path_dyn(self, name, **kwargs): # get path with dynamic path-arguments on member-vars
         if self._paths is None:
@@ -43,6 +52,7 @@ class KeycloakAdminBase(object):
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
     _gen_payload_is_multiple = False
+    _gen_payload_full_on_update = True
     _params = None
     _idents = {}
 
@@ -125,10 +135,20 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
         return res
 
     def update(self, **kwargs):
-        return self._admin.put(
+
+        updatedata=self.gen_payload(**kwargs)
+        if self._gen_payload_full_on_update:
+            data = copy(self())
+            data.update(updatedata)
+        else:
+            data = updatedata
+
+        res = self._admin.put(
             url=self._admin.get_full_url(self.get_path_dyn('single')),
-            data=json.dumps(self.gen_payload(**kwargs))
+            data=json.dumps(data)
         )
+        self._params = None
+        return res
 
     def delete(self):
         return self._admin.delete(
@@ -222,7 +242,6 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     _sort_asc = True
     _itemclass = abc.ABCMeta
 
-
     def __iter__(self, *args, **kwargs):
         return self().__iter__(*args, **kwargs)
 
@@ -243,11 +262,20 @@ class KeycloakAdminCollection(KeycloakAdminBase):
                 subitems = items.get(pos, [])
                 if isinstance(subitems, list):
                     for k in subitems:
-                        res.append(itemclass(params=k, **self._url_item_params(pos, k)))
+                        res.append(itemclass(params=k, **self._url_item_params(k, pos)))
                 elif isinstance(subitems, dict):
                     for k, v in subitems.items():
-                        res.append(itemclass(**self._url_item_params(pos, v)))
+                        res.append(itemclass(**self._url_item_params(v, pos)))
 
+            return res
+        elif isinstance(self._itemclass, tuple):
+            lookupKey, mapping = self._itemclass
+            res = []
+            for k in items:
+                itemclass = self._get_itemclass(**k)
+                # itemclass = mapping.get(k.get(lookupKey), mapping[None])
+                item = itemclass(**self._url_item_params(k, itemclass))
+                res.append(item)
             return res
         else:
             return [
@@ -302,9 +330,9 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         self._sort_col = None
         self._sort_asc = True
 
-    def _url_collection(self, **kwargs): # TODO generalize?
+    def _url_collection(self, target=None, **kwargs): # TODO generalize?
         params = self._url_collection_params() or {} # path-params
-        url = self._admin.get_full_url(self.get_path_dyn(self._url_collection_path_name(), **params))
+        url = self._admin.get_full_url(self.get_path_dyn(target or self._url_collection_path_name(), **params))
         if kwargs:
             url += '?' + six.moves.urllib.parse.urlencode(kwargs)
         return url
@@ -319,12 +347,26 @@ class KeycloakAdminCollection(KeycloakAdminBase):
     def _url_collection_path_name(self): # can be overwritten, if other path-names should be used
         return 'collection'
 
+    def _get_itemclass(self, **kwargs):
+        if isinstance(self._itemclass, tuple):
+            lookupKey, mapping = self._itemclass
+            itemclass = mapping.get(kwargs.get(lookupKey), mapping[None])
+        else:
+            itemclass = self._itemclass
+        return itemclass
+
     def create(self, *args, **kwargs):
-        if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
-            args = args[0]
+        itemclass = self._get_itemclass(**kwargs)
+        data = itemclass.gen_payload(*args, **kwargs)
+
+        url = self._url_collection()
+        if self._paths.get(itemclass):
+            url = self._url_collection(itemclass)
+
+        # print(data)
         res = self._admin.post(
-            url=self._url_collection(),
-            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
+            url=url,
+            data=json.dumps(data)
         )
         if self._itemclass._gen_payload_is_multiple:
             pass # TODO implement to get instances of given itemclass
@@ -342,10 +384,38 @@ class KeycloakAdminCollection(KeycloakAdminBase):
                 and re.match("^%s" % url, self._admin.response_headers['Location']):
             return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
 
-    def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
+
+class KeycloakAdminMapping(KeycloakAdminCollection):
+
+    def create(self, **kwargs):
+        self.append([kwargs])
+
+    def append(self, item):
+        self.extend([item])
+
+    def extend(self, items):
+        data = [
+            isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
+            for d in items
+        ]
+
+        url = self._url_collection()
+        # print('%s -> %s' % (url, data))
+        res = self._admin.post(
+            url=url,
+            data=json.dumps(data)
+        )
+
+    def delete(self, *args): # working only on requests with multiple data-structure
         if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
             args = args[0]
+
+        # data = self._itemclass.gen_payload(*args, **kwargs)
+        data = [
+            isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
+            for d in args
+        ]
         return self._admin.delete(
             url=self._url_collection(),
-            data=json.dumps(self._itemclass.gen_payload(*args, **kwargs))
+            data=json.dumps(data)
         )

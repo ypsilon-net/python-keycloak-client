@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminBaseElement, KeycloakAdminMapping
 from keycloak.helpers import to_camel_case
 
 ROLE_KWARGS = [
@@ -16,7 +16,8 @@ ROLE_KWARGS = [
 __all__ = ('Role', 'Roles', 'RealmRole', 'RealmRoles', 'ClientRole', 'ClientRoles',)
 
 
-class Roles(KeycloakAdminCollection):
+class Roles(KeycloakAdminMapping):
+
     def create(self, name, **kwargs):
         """
         Create new role
@@ -50,7 +51,14 @@ class Roles(KeycloakAdminCollection):
 
 class Role(KeycloakAdminBaseElement):
     _role_name = None
-
+    _idents = {
+        'id' : 'id',
+        'name': 'name',
+        'description': 'description',
+        'composite': 'composite',
+        'container_id': 'containerId',
+        'client_role': 'clientRole',
+    }
     def __init__(self, role_name, *args, **kwargs):
         self._role_name = role_name
         super(Role, self).__init__(*args, **kwargs)
@@ -79,6 +87,33 @@ class Role(KeycloakAdminBaseElement):
         return self._admin.put(
             url=self._admin.get_full_url(self.get_path_dyn('single')),
             data=json.dumps(payload)
+        )
+
+    @property
+    def composites(self):
+        return CompositeRoles(role=self, admin=self._admin, realm_name=self._realm_name)
+
+
+class CompositeRoles(Roles):
+    _role = None
+    _realm_name = None
+    _paths = {
+        'collection': '/auth/admin/realms/{realm_name}/roles-by-id/{role_id}/composites'
+    }
+    _itemclass = Role
+
+    def __init__(self, realm_name, role, *args, **kwargs):
+        self._role = role
+        self._realm_name = realm_name
+        super(CompositeRoles, self).__init__(*args, **kwargs)
+
+    @property
+    def _role_id(self):
+        return self._role.id
+
+    def _url_item_params(self, data):
+        return dict(
+           admin=self._admin, realm_name=self._realm_name, role_name=data['name']
         )
 
 
