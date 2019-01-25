@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import abc
 import json
 import re
@@ -356,10 +358,10 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         return itemclass
 
     def create(self, return_id=False, *args, **kwargs):
-        if isinstance(return_id, list): # TODO find a better way of taking multiple data-values
+        # TODO find a better way of taking multiple data-values
+        if isinstance(return_id, Iterable):
             args = return_id
             return_id = False
-
 
         itemclass = self._get_itemclass(**kwargs)
         data = itemclass.gen_payload(*args, **kwargs)
@@ -409,7 +411,8 @@ class KeycloakAdminMapping(KeycloakAdminCollection):
         )
 
     def delete(self, *args): # working only on requests with multiple data-structure
-        if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
+        # TODO find a better way of taking multiple data-values
+        if args and isinstance(args[0], Iterable):
             args = args[0]
 
         # data = self._itemclass.gen_payload(*args, **kwargs)
