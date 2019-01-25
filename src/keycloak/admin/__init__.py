@@ -11,6 +11,7 @@ __all__ = (
     'KeycloakAdminBase',
     'KeycloakAdminBaseElement',
     'KeycloakAdminCollection',
+    'KeycloakAdminMapping',
 )
 
 
