@@ -55,7 +55,7 @@ class Role(KeycloakAdminBaseElement):
         'id' : 'id',
         'name': 'name',
         'description': 'description',
-        'composite': 'composite',
+        #'composite': 'composite',
         'container_id': 'containerId',
         'client_role': 'clientRole',
     }
