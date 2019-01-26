@@ -54,8 +54,8 @@ class Role(KeycloakAdminBaseElement):
     _idents = {
         'id' : 'id',
         'name': 'name',
-        'description': 'description',
-        #'composite': 'composite',
+        # 'description': 'description',
+        'composite': 'composite',
         'container_id': 'containerId',
         'client_role': 'clientRole',
     }
