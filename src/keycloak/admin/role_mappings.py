@@ -1,10 +1,10 @@
-from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
+from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement, KeycloakAdminMapping
 from keycloak.admin.roles import RealmRole, ClientRole, ClientRoles
 
 __all__ = ('RoleMappings', 'ClientRoleMappings',)
 
 
-class RoleMappings(KeycloakAdminCollection):
+class RoleMappings(KeycloakAdminMapping):
     _realm_name = None
     _user = None
     _paths = {
