@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from keycloak.admin import KeycloakAdminBaseElement, KeycloakAdminMapping
+from keycloak.admin import KeycloakAdminBaseElement, KeycloakAdminMapping, KeycloakAdminCollection
 from keycloak.helpers import to_camel_case
 
 ROLE_KWARGS = [
@@ -16,7 +16,7 @@ ROLE_KWARGS = [
 __all__ = ('Role', 'Roles', 'RealmRole', 'RealmRoles', 'ClientRole', 'ClientRoles',)
 
 
-class Roles(KeycloakAdminMapping):
+class Roles(KeycloakAdminCollection):
 
     def create(self, name, **kwargs):
         """
@@ -94,7 +94,7 @@ class Role(KeycloakAdminBaseElement):
         return CompositeRoles(role=self, admin=self._admin, realm_name=self._realm_name)
 
 
-class CompositeRoles(Roles):
+class CompositeRoles(KeycloakAdminMapping):
     _role = None
     _realm_name = None
     _paths = {
