@@ -122,6 +122,7 @@ class Resource(ResurcesServerSubElement):
         'attributes': 'attributes',
         'uri': 'uri',
         'type': 'type',
+        'scopes': 'scopes',
     }
 
 
