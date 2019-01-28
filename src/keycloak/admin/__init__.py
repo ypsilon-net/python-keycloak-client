@@ -25,6 +25,11 @@ class KeycloakAdminBase(object):
     _admin = None
     _paths = None
 
+    @classmethod
+    def parse_path_params(cls, name, url):
+        rx_path = re.sub('\{([^}]+)\}', '(?P<\g<1>>.*?)', cls._paths[name])
+        return re.search('%s$' % rx_path, url).groupdict()
+
     def __init__(self, admin, **kwargs):
         """
         :param keycloak.admin.KeycloakAdmin admin:
@@ -60,6 +65,11 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
     _gen_payload_full_on_update = True
     _params = None
     _idents = {}
+
+    @classmethod
+    def factory(cls, url, admin, **kwargs): # create object on url/path of keycloak-object-location
+        kwargs.update(cls.parse_path_params('single', url))
+        return cls(admin=admin, **kwargs)
 
     @classmethod
     def gen_payload(cls, **kwargs):
@@ -302,7 +312,6 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             self.__cls__.__name__
         ))
 
-
     def sorted_by(self, col, asc=True):  # scope
         self._sort_col = col
         self._sort_asc = asc
@@ -359,25 +368,17 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             data=json.dumps(data)
         )
 
-        return self._create_extract_id()
-
-    def _create_extract_id(self):
-        # extract id of created keycloak-object from location-url of response-headers
-        # TODO only tested on creating an user; have to be also checked on other object-types
-        url = self._url_collection()
-        if self._admin.response_headers \
-                and 'Location' in self._admin.response_headers \
-                and re.match("^%s" % url, self._admin.response_headers['Location']):
-            return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
+        if self._admin.response_headers and 'Location' in self._admin.response_headers:
+            return itemclass.factory(self._admin.response_headers['Location'], self._admin)
 
 
 class KeycloakAdminMapping(KeycloakAdminCollection):
 
     def create(self, **kwargs):
-        self.append(kwargs)
+        return self.append(kwargs)
 
     def append(self, *args): # add single element
-        self.extend(args)
+        return self.extend(args)
 
     def extend(self, items): # add multiple elements
         data = [
@@ -385,7 +386,7 @@ class KeycloakAdminMapping(KeycloakAdminCollection):
             for d in items
         ]
 
-        res = self._admin.post(
+        return self._admin.post(
             url=self._url_collection(),
             data=json.dumps(data)
         )
