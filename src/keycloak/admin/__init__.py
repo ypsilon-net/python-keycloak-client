@@ -1,4 +1,7 @@
-from collections.abc import Iterable
+try:
+    from collections.abc import Iterable # python 3
+except ImportError:
+    from collections import Iterable # python 2
 
 import abc
 import json
@@ -21,6 +24,11 @@ PAT_VAR = re.compile('{([\_\w]+)}')
 class KeycloakAdminBase(object):
     _admin = None
     _paths = None
+
+    @classmethod
+    def parse_path_params(cls, name, url):
+        rx_path = re.sub('\{([^}]+)\}', '(?P<\g<1>>.*?)', cls._paths[name])
+        return re.search('%s$' % rx_path, url).groupdict()
 
     def __init__(self, admin, **kwargs):
         """
@@ -54,37 +62,27 @@ class KeycloakAdminBase(object):
 
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
-    _gen_payload_is_multiple = False
     _gen_payload_full_on_update = True
     _params = None
     _idents = {}
 
     @classmethod
-    def gen_payload(cls, *args, **kwargs):
-        if cls._gen_payload_is_multiple:
-            return cls._gen_payload_multiple(*args, **kwargs)
-        else:
-            return cls._gen_payload_single(**kwargs)
+    def factory(cls, url, admin, **kwargs): # create object on url/path of keycloak-object-location
+        kwargs.update(cls.parse_path_params('single', url))
+        return cls(admin=admin, **kwargs)
 
     @classmethod
-    def _gen_payload_multiple(cls, *args, **kwargs):
-        res = []
-        for data in args or [kwargs]:
-            res.append(cls._gen_payload_single(**data))
-        return res
-
-    @classmethod
-    def _gen_payload_single(cls, **kwargs):
+    def gen_payload(cls, **kwargs):
         res = {}
         for key, val in kwargs.items():
             if cls._idents and key not in cls._idents:
                 continue
             fkey = cls._idents[key] if key in cls._idents else key
-            res[fkey] = cls._gen_payload_single_format(key, val)
+            res[fkey] = cls._gen_payload_format(key, val)
         return res
 
     @classmethod
-    def _gen_payload_single_format(cls, key, val):
+    def _gen_payload_format(cls, key, val):
         return val
 
     def __init__(self, params=None, *args, **kwargs):
@@ -314,7 +312,6 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             self.__cls__.__name__
         ))
 
-
     def sorted_by(self, col, asc=True):  # scope
         self._sort_col = col
         self._sort_asc = asc
@@ -358,69 +355,55 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             itemclass = self._itemclass
         return itemclass
 
-    def create(self, return_id=False, *args, **kwargs):
-        # TODO find a better way of taking multiple data-values
-        if isinstance(return_id, Iterable):
-            args = return_id
-            return_id = False
-
+    def create(self, **kwargs):
         itemclass = self._get_itemclass(**kwargs)
-        data = itemclass.gen_payload(*args, **kwargs)
+        data = itemclass.gen_payload(**kwargs)
 
         url = self._url_collection()
         if self._paths.get(itemclass):
             url = self._url_collection(itemclass)
 
-        # print(data)
         res = self._admin.post(
             url=url,
             data=json.dumps(data)
         )
-        if return_id:
-            res = self._create_extract_id()
-        return res
 
-    def _create_extract_id(self):
-        # extract id of created keycloak-object from location-url of response-headers
-        # TODO only tested on creating an user; have to be also checked on other object-types
-        url = self._url_collection()
-        if self._admin.response_headers \
-                and 'Location' in self._admin.response_headers \
-                and re.match("^%s" % url, self._admin.response_headers['Location']):
-            return re.sub("^%s" % url, '', self._admin.response_headers['Location']).strip('/')
+        try:
+            return itemclass.factory(self._admin.response_headers['Location'], self._admin)
+        except:
+            return res
 
 
 class KeycloakAdminMapping(KeycloakAdminCollection):
 
     def create(self, **kwargs):
-        self.append([kwargs])
+        return self.append(kwargs)
 
-    def append(self, item):
-        self.extend([item])
+    def append(self, *args): # add single element
+        return self.extend(args)
 
-    def extend(self, items):
+    def extend(self, items): # add multiple elements
         data = [
             isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
             for d in items
         ]
 
-        url = self._url_collection()
-        # print('%s -> %s' % (url, data))
-        res = self._admin.post(
-            url=url,
+        return self._admin.post(
+            url=self._url_collection(),
             data=json.dumps(data)
         )
 
-    def delete(self, *args): # working only on requests with multiple data-structure
-        # TODO find a better way of taking multiple data-values
+    def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
         if args and isinstance(args[0], Iterable):
             args = args[0]
+        elif kwargs:
+            args = [kwargs]
 
-        # data = self._itemclass.gen_payload(*args, **kwargs)
         data = [
             isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
             for d in args
         ]
+
         return self._admin.delete(
             url=self._url_collection(),
             data=json.dumps(data)
