@@ -51,37 +51,22 @@ class KeycloakAdminBase(object):
 
 
 class KeycloakAdminBaseElement(KeycloakAdminBase):
-    _gen_payload_is_multiple = False
     _gen_payload_full_on_update = True
     _params = None
     _idents = {}
 
     @classmethod
-    def gen_payload(cls, *args, **kwargs):
-        if cls._gen_payload_is_multiple:
-            return cls._gen_payload_multiple(*args, **kwargs)
-        else:
-            return cls._gen_payload_single(**kwargs)
-
-    @classmethod
-    def _gen_payload_multiple(cls, *args, **kwargs):
-        res = []
-        for data in args or [kwargs]:
-            res.append(cls._gen_payload_single(**data))
-        return res
-
-    @classmethod
-    def _gen_payload_single(cls, **kwargs):
+    def gen_payload(cls, **kwargs):
         res = {}
         for key, val in kwargs.items():
             if cls._idents and key not in cls._idents:
                 continue
             fkey = cls._idents[key] if key in cls._idents else key
-            res[fkey] = cls._gen_payload_single_format(key, val)
+            res[fkey] = cls._gen_payload_format(key, val)
         return res
 
     @classmethod
-    def _gen_payload_single_format(cls, key, val):
+    def _gen_payload_format(cls, key, val):
         return val
 
     def __init__(self, params=None, *args, **kwargs):
@@ -355,25 +340,20 @@ class KeycloakAdminCollection(KeycloakAdminBase):
             itemclass = self._itemclass
         return itemclass
 
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         itemclass = self._get_itemclass(**kwargs)
-        data = itemclass.gen_payload(*args, **kwargs)
+        data = itemclass.gen_payload(**kwargs)
 
         url = self._url_collection()
         if self._paths.get(itemclass):
             url = self._url_collection(itemclass)
 
-        # print(data)
-        res = self._admin.post(
+        self._admin.post(
             url=url,
             data=json.dumps(data)
         )
-        if self._itemclass._gen_payload_is_multiple:
-            pass # TODO implement to get instances of given itemclass
-        else:
-            # TODO extend to get instance of given itemclass
-            res = self._create_extract_id()
-        return res
+
+        return self._create_extract_id()
 
     def _create_extract_id(self):
         # extract id of created keycloak-object from location-url of response-headers
@@ -388,33 +368,33 @@ class KeycloakAdminCollection(KeycloakAdminBase):
 class KeycloakAdminMapping(KeycloakAdminCollection):
 
     def create(self, **kwargs):
-        self.append([kwargs])
+        self.append(kwargs)
 
-    def append(self, item):
-        self.extend([item])
+    def append(self, *args): # add single element
+        self.extend(args)
 
-    def extend(self, items):
+    def extend(self, items): # add multiple elements
         data = [
             isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
             for d in items
         ]
 
-        url = self._url_collection()
-        # print('%s -> %s' % (url, data))
         res = self._admin.post(
-            url=url,
+            url=self._url_collection(),
             data=json.dumps(data)
         )
 
-    def delete(self, *args): # working only on requests with multiple data-structure
-        if args and isinstance(args[0], list): # TODO find a better way of taking multiple data-values
+    def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
+        if args and isinstance(args[0], list):
             args = args[0]
+        elif kwargs:
+            args = [kwargs]
 
-        # data = self._itemclass.gen_payload(*args, **kwargs)
         data = [
             isinstance(d, KeycloakAdminBaseElement) and d() or self._get_itemclass(**d).gen_payload(**d)
             for d in args
         ]
+
         return self._admin.delete(
             url=self._url_collection(),
             data=json.dumps(data)

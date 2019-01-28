@@ -1,10 +1,10 @@
-from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
-from keycloak.admin.roles import RealmRole, ClientRole, ClientRoles
+from keycloak.admin import KeycloakAdminMapping
+from keycloak.admin.roles import RealmRole, ClientRole
 
 __all__ = ('RoleMappings', 'ClientRoleMappings',)
 
 
-class RoleMappings(KeycloakAdminCollection):
+class RoleMappings(KeycloakAdminMapping):
     _realm_name = None
     _user = None
     _paths = {
@@ -46,7 +46,6 @@ class RoleMappings(KeycloakAdminCollection):
 
 
 class ClientRoleMapping(ClientRole):
-    _gen_payload_is_multiple = True
     _paths = {
         'single': '' # TODO define correct path
     }
