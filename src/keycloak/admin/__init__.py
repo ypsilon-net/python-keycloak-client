@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import abc
 import json
 import re
@@ -9,6 +11,7 @@ __all__ = (
     'KeycloakAdminBase',
     'KeycloakAdminBaseElement',
     'KeycloakAdminCollection',
+    'KeycloakAdminMapping',
 )
 
 
@@ -385,7 +388,7 @@ class KeycloakAdminMapping(KeycloakAdminCollection):
         )
 
     def delete(self, *args, **kwargs): # working only on requests with multiple data-structure
-        if args and isinstance(args[0], list):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         elif kwargs:
             args = [kwargs]

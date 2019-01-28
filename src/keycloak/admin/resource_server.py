@@ -256,7 +256,7 @@ class Permission(ResurcesServerSubElement):
         'type': 'type',
         'resources': 'resources',
         'policies': 'policies',
-        'scopes': 'scopes'
+        #'scopes': 'scopes'
     }
     # def __init__(self, *args, **kwargs):
     #     super(Permission, self).__init__(*args, **kwargs)
@@ -284,6 +284,10 @@ class ScopePermission(Permission):
     _paths = {
         'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/{id}',
     }
+    _idents = copy(Permission._idents)
+    _idents.update({
+        'scopes': 'scopes',
+    })
 
     @property
     def scopes(self):

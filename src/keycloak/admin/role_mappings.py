@@ -83,6 +83,11 @@ class ClientRoleMappings(RoleMappings):
         self._composite = True
         return self
 
+    def by_name(self, name):
+        for rm in self():
+            if rm.name == name:
+                return rm
+
     @property
     def client_id(self):
         return self._client_id
