@@ -363,13 +363,15 @@ class KeycloakAdminCollection(KeycloakAdminBase):
         if self._paths.get(itemclass):
             url = self._url_collection(itemclass)
 
-        self._admin.post(
+        res = self._admin.post(
             url=url,
             data=json.dumps(data)
         )
 
-        if self._admin.response_headers and 'Location' in self._admin.response_headers:
+        try:
             return itemclass.factory(self._admin.response_headers['Location'], self._admin)
+        except:
+            return res
 
 
 class KeycloakAdminMapping(KeycloakAdminCollection):
