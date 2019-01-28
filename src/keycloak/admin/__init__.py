@@ -1,4 +1,7 @@
-from collections.abc import Iterable
+try:
+    from collections.abc import Iterable # python 3
+except ImportError:
+    from collections import Iterable # python 2
 
 import abc
 import json
