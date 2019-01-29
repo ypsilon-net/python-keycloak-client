@@ -12,9 +12,20 @@ class KeycloakClientResponseError(KeycloakClientError):
         self.response = response
 
         if hasattr(response, 'content') and response.content:
-            import json
-            content = json.loads(response.content)
-            if 'errorMessage' in content:
-                self.message = content['errorMessage']
+            try:
+                import json
+
+                data = response.content
+                # on python 3 data is bytes .. we just asume encoding
+                if isinstance(data, (bytes, bytearray)):
+                    data = data.decode('utf-8', errors='ignore')
+
+                content = json.loads(data)
+                if 'errorMessage' in content:
+                    self.message = content['errorMessage']
+
+            except Exception as e:
+                import logging
+                logging.error('Unable to append response content to exception: %s' % (e, ))
 
         super(KeycloakClientResponseError, self).__init__(**kwargs)
