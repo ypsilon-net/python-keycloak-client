@@ -155,9 +155,20 @@ class KeycloakAuthz(WellKnownMixin, object):
             resource_scopes_tuples=resource_scopes_tuples,
             submit_request=submit_request
         )
+        return self.eval_permissions_data(permissions.get('permissions', []), resource_scopes_tuples)
 
+    def eval_permissions_data(self, permissions, resource_scopes_tuples=None):
+        """
+        Evaluates if user has permission for all the resource scope
+        combinations with the provided permissions dict.
+
+        :param dict token: permission dict which is returned by self.get_permission
+        :param Iterable[Tuple[str, str]] resource_scopes_tuples: resource to
+        access
+        rtype: boolean
+        """
         res = []
-        for permission in permissions.get('permissions', []):
+        for permission in permissions:
             for scope in permission.get('scopes', []):
                 ptuple = (permission.get('rsname'), scope)
                 if ptuple in resource_scopes_tuples:
@@ -211,4 +222,4 @@ class KeycloakAuthz(WellKnownMixin, object):
         except KeycloakClientError as error:
             self.logger.warn(str(error))
         return roles_info
-    
+
