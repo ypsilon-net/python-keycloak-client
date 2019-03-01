@@ -42,7 +42,6 @@ class Group(KeycloakAdminBaseElement):
         return GroupMembers(admin=self._admin, realm_name=self._realm_name, group_id=self._id)
 
 
-
 class Groups(KeycloakAdminCollection):
     _defaults_all_query = { # https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
         'max': -1, # turns off default max (100)
@@ -58,73 +57,38 @@ class Groups(KeycloakAdminCollection):
         self._realm_name = realm_name
         super(Groups, self).__init__(*args, **kwargs)
 
-    def by_id(self, group_id):
-        return Group(admin=self._admin, realm_name=self._realm_name, id=group_id)
-
-
-    def _by_param(self, param, key):
-        res = self.unsorted().all(**{key: param})
-        for group in res or []:
-            # print ('"%s" ? "%s" -> %s' % (group.get(key), param, group))
-            if group.get('name') == param:
-                return self.by_id(group['id'])
-            for subgroup in group.get('subGroups') or []:
-                # print ('"%s" ? "%s" -> %s' % (subgroup.get(key), param, subgroup))
-                if subgroup.get(key) == param:
-                    return self.by_id(subgroup['id'])
-
-
-            # return self.by_id(res[0]['id'])
-
-    def by_name(self, name):
-        return self._by_param(name, 'name')
-
-    def by_path(self, path):
-        return self._by_param(path, 'path')
-
-
     def __len__(self):
         return self.count()
 
+    def by_id(self, group_id):
+        return Group(admin=self._admin, realm_name=self._realm_name, id=group_id)
+
+    def by_name(self, name):
+        groups = self.unsorted().all(search=name)
+        return self._by_name(name, groups)
+
+    def by_path(self, path):
+        groups = self.unsorted().all(search=path.split('/')[-1])
+        return self._by_path(path, groups)
+
     def count(self):
-        return self._admin.get(
-            self._admin.get_full_url(self.get_path_dyn('count'))
-        )
+        return super(Groups, self).count()['count']
 
-    # def create(self, username, **kwargs):
-    #     """
-    #     Create a user in Keycloak
+    def _by_name(self, name, groups): # recursive; called by by_name
+        res = []
+        for group in groups:
+            if group['name'] == name:
+                res.append(Group(admin=self._admin, realm_name=self._realm_name, id=group['id']))
+            res += self._by_name(name, group['subGroups'])
+        return res
 
-    #     http://www.keycloak.org/docs-api/3.4/rest-api/index.html#_users_resource
-
-    #     :param str username:
-    #     :param object credentials: (optional)
-    #     :param str first_name: (optional)
-    #     :param str last_name: (optional)
-    #     :param str email: (optional)
-    #     :param boolean enabled: (optional)
-    #     """
-    #     payload = OrderedDict(username=username)
-
-    #     if 'credentials' in kwargs:
-    #         payload['credentials'] = [kwargs['credentials']]
-
-    #     if 'first_name' in kwargs:
-    #         payload['firstName'] = kwargs['first_name']
-
-    #     if 'last_name' in kwargs:
-    #         payload['lastName'] = kwargs['last_name']
-
-    #     if 'email' in kwargs:
-    #         payload['email'] = kwargs['email']
-
-    #     if 'enabled' in kwargs:
-    #         payload['enabled'] = kwargs['enabled']
-
-    #     return self._admin.post(
-    #         url=self._url_collection(),
-    #         data=json.dumps(payload)
-    #     )
+    def _by_path(self, path, groups, path_idx=0): # recursive; called by by_path
+        path_search = '/' + '/'.join(path.strip('/').split('/')[:path_idx+1])
+        for group in groups:
+            if group['path'] == path:
+                return self.by_id(group['id'])
+            if path != path_search and group['path'] == path_search:
+                return self._by_path(path, group['subGroups'], path_idx + 1)
 
     def _url_item_params(self, data):
         return dict(
