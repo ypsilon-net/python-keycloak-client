@@ -1,6 +1,5 @@
 from keycloak.admin import KeycloakAdminCollection, KeycloakAdminBaseElement
 from keycloak.admin.users import User
-from collections import OrderedDict
 
 __all__ = ('Group', 'Groups',)
 
@@ -10,8 +9,13 @@ class Group(KeycloakAdminBaseElement):
     _realm_name = None
     _paths = {
         'single': '/auth/admin/realms/{realm_name}/groups/{id}',
+        'subs': '/auth/admin/realms/{realm_name}/groups/{id}/children',
     }
-    _idents = {'path': 'path'}
+    _idents = {
+        'name': 'name',
+        'path': 'path',
+        'subs': 'subGroups',
+    }
 
     def __init__(self, realm_name, id, *args, **kwargs):
         self._id = id
@@ -31,7 +35,7 @@ class Group(KeycloakAdminBaseElement):
         return self().get('path')
 
     @property
-    def subGroups(self):
+    def subs(self):
         return [
             Group(params=sg, admin=self._admin, realm_name=self._realm_name, id=sg['id'])
             for sg in self().get('subGroups')
@@ -40,6 +44,17 @@ class Group(KeycloakAdminBaseElement):
     @property
     def members(self):
         return GroupMembers(admin=self._admin, realm_name=self._realm_name, group_id=self._id)
+
+    def create_sub(self, name, **kwargs):
+        kwargs['name'] = name
+        return self.create(self._admin,
+                           self._admin.get_full_url(self.get_path_dyn('subs')),
+                           **kwargs)
+
+    def sub_by_path(self, path):
+        for sub in self().get('subGroups'):
+            if sub['path'] == path:
+                return Group(admin=self._admin, realm_name=self._realm_name, id=sub['id'])
 
 
 class Groups(KeycloakAdminCollection):
@@ -74,6 +89,21 @@ class Groups(KeycloakAdminCollection):
     def count(self):
         return super(Groups, self).count()['count']
 
+    def create(self, name, **kwargs):
+        kwargs['name'] = name
+        return super(Groups, self).create(**kwargs)
+
+    def create_path(self, path, **kwargs):
+        names = path.strip('/').split('/')
+        group = None
+        for idx, name in enumerate(names):
+            path = '/' + '/'.join(names[:idx + 1])
+            if group:
+                group = group.sub_by_path(path) or group.create_sub(name)
+            else: # set root
+                group = self.by_path(path) or self.create(name)
+        return group
+
     def _by_name(self, name, groups): # recursive; called by by_name
         res = []
         for group in groups:
@@ -100,12 +130,13 @@ class GroupMembers(KeycloakAdminCollection):
     _defaults_all_query = { # https://www.keycloak.org/docs-api/2.5/rest-api/index.html#_get_users_2
         'max': -1, # turns off default max (100)
     }
+    _group_id = None
+    _itemclass = User
     _paths = {
         'collection': '/auth/admin/realms/{realm_name}/groups/{group_id}/members',
         # 'count': '/auth/admin/realms/{realm_name}/users/count',
     }
     _realm_name = None
-    _itemclass = User
 
     def __init__(self, realm_name, group_id, *args, **kwargs):
         self._realm_name = realm_name

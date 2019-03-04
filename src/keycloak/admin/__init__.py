@@ -67,18 +67,25 @@ class KeycloakAdminBaseElement(KeycloakAdminBase):
     _idents = {}
 
     @classmethod
-    def factory(cls, url, admin, **kwargs): # create object on url/path of keycloak-object-location
-        kwargs.update(cls.parse_path_params('single', url))
-        return cls(admin=admin, **kwargs)
+    def create(cls, admin, url, **kwargs): # general create-method on url/path
+        res = admin.post(
+            url=url,
+            data=json.dumps(cls.gen_payload(**kwargs))
+        )
+        try: # instance object on keycloak-object-location of created object
+            kwargs.update(cls.parse_path_params('single', admin.response_headers['Location']))
+            return cls(admin=admin, **kwargs)
+        except:
+            return res
 
     @classmethod
     def gen_payload(cls, **kwargs):
         res = {}
+        fkeys = cls._idents.values() if cls._idents else []
         for key, val in kwargs.items():
-            if cls._idents and key not in cls._idents:
-                continue
-            fkey = cls._idents[key] if key in cls._idents else key
-            res[fkey] = cls._gen_payload_format(key, val)
+            if not cls._idents or key in cls._idents or key in fkeys:
+                fkey = cls._idents[key] if cls._idents and key in cls._idents else key
+                res[fkey] = cls._gen_payload_format(key, val)
         return res
 
     @classmethod
@@ -357,21 +364,8 @@ class KeycloakAdminCollection(KeycloakAdminBase):
 
     def create(self, **kwargs):
         itemclass = self._get_itemclass(**kwargs)
-        data = itemclass.gen_payload(**kwargs)
-
-        url = self._url_collection()
-        if self._paths.get(itemclass):
-            url = self._url_collection(itemclass)
-
-        res = self._admin.post(
-            url=url,
-            data=json.dumps(data)
-        )
-
-        try:
-            return itemclass.factory(self._admin.response_headers['Location'], self._admin)
-        except:
-            return res
+        url = self._url_collection(itemclass if self._paths.get(itemclass) else None)
+        return itemclass.create(self._admin, url, **kwargs)
 
 
 class KeycloakAdminMapping(KeycloakAdminCollection):
