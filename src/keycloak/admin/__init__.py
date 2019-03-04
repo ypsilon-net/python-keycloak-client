@@ -209,7 +209,7 @@ class KeycloakAdmin(object):
     def post(self, url, data, headers=None, **kwargs):
         return self._req('post', url, headers, data)
 
-    def put(self, url, data, headers=None, **kwargs):
+    def put(self, url, data=None, headers=None, **kwargs):
         return self._req('put', url, headers, data)
 
     def get(self, url, headers=None, **kwargs):

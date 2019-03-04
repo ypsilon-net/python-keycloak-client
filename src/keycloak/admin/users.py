@@ -36,6 +36,11 @@ class User(KeycloakAdminBaseElement):
         return self._id
 
     @property
+    def user_groups(self):
+        from keycloak.admin.user_groups import UserGroups
+        return UserGroups(admin=self._admin, realm_name=self._realm_name, user_id=self._id)
+
+    @property
     def role_mappings(self):
         from keycloak.admin.role_mappings import RoleMappings
         return RoleMappings(admin=self._admin, realm_name=self._realm_name, user=self)

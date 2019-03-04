@@ -69,7 +69,7 @@ class KeycloakClient(object):
                               data=data)
         )
 
-    def put(self, url, data, headers=None, **kwargs):
+    def put(self, url, data=None, headers=None, **kwargs):
         return self._handle_response(
             self.session.put(url, headers=headers or {}, params=kwargs,
                              data=data)
