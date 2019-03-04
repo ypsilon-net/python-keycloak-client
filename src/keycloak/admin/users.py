@@ -59,10 +59,22 @@ class Users(KeycloakAdminCollection):
     def by_id(self, id):
         return User(admin=self._admin, realm_name=self._realm_name, id=id)
 
-    def by_name(self, name):
-        res = self.unsorted().all(username=name)
-        if res:
-            return self.by_id(res[0]['id'])
+    def by_name(self, name, wildcard=False):
+        '''
+        wildcard=False: returns user for exactly given name
+        wildcard=True: returns users-list with given name in it
+        :param name:
+        :param wildcard:
+        '''
+
+        res = [] if wildcard else None
+        for user in self.unsorted().all(username=name):
+            if wildcard:
+                res.append(self.by_id(user['id']))
+            elif user['username'] == name:
+                res = self.by_id(user['id'])
+                break
+        return res
 
     def by_email(self, email):
         res = self.unsorted().all(email=email)
