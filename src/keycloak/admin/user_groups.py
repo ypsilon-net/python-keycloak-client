@@ -47,6 +47,9 @@ class UserGroups(KeycloakAdminCollection):
             if group['path'] == group_path:
                 return self.by_group_id(group['id'])
 
+    def count(self): # count-request not supported by keycloak (api 4.3)
+        return len(self.all())
+
     def create(self, group_id, **kwargs):
         return self.by_group_id(group_id).create()
 
