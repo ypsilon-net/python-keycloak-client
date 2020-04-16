@@ -85,15 +85,31 @@ Release Notes
 
 **unreleased**
 
+
+**v0.2.3**
+
+* Bug fix: `client_class` on `KeycloakRealm` constructor (thanks to `pcaro <https://github.com/pcaro>`_)
+* Improve Keycloak Client (thanks to `ByJacob <https://github.com/ByJacob>`_)
+
+    * add delete in admin client
+    * add manage groups in realm
+    * add manage user roles
+    * rename Roles to ClientRoles
+
+**v0.2.2**
+
+* Added support for UMA1 for Keycloak < 4.0
+* Allow to query registered users (thanks to `aberres <https://github.com/aberres>`_)
+
 **v0.2.1**
 
-* Including aio version in released package. (thanks to @mackeyja92)
+* Including aio version in released package. (thanks to `mackeyja92 <https://github.com/mackeyja92>`_)
 
 **v0.2.0**
 
-* Added async client based on aiohttp (thanks to @nkoshell)
+* Added async client based on aiohttp (thanks to `nkoshell <https://github.com/nkoshell>`_)
 
 **v0.1.4**
 
-* Add support for password grant (thanks to @scranen)
-* Bugfix: Prevent multiple values for keyword argument 'audience' in jwt.decode() (thanks to @eugenejo)
+* Add support for password grant (thanks to `scranen <https://github.com/scranen>`_)
+* Bugfix: Prevent multiple values for keyword argument 'audience' in jwt.decode() (thanks to `eugenejo <https://github.com/eugenejo>`_)

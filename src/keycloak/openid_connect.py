@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from keycloak.mixins import WellKnownMixin
 
 try:
@@ -145,6 +143,21 @@ class KeycloakOpenidConnect(WellKnownMixin):
                                           )
                                       })
 
+    def uma_ticket(self, token, **kwargs):
+        """
+        :param str audience: (optional) Client ID to get te permissions for.
+        :rtype: dict
+        """
+
+        payload = {"grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket"}
+        payload.update(**kwargs)
+
+        return self._realm.client.post(
+            self.get_url("token_endpoint"),
+            payload,
+            headers={"Authorization": "Bearer {}".format(token)}
+        )
+
     def authorization_url(self, **kwargs):
         """
         Get authorization URL to redirect the resource owner to.
@@ -159,14 +172,12 @@ class KeycloakOpenidConnect(WellKnownMixin):
         :return: URL to redirect the resource owner to
         :rtype: str
         """
-        payload = OrderedDict()
-        payload['response_type'] = 'code'
-        payload['client_id'] = self._client_id
+        payload = {'response_type': 'code', 'client_id': self._client_id}
 
-        for key in sorted(kwargs.keys()):
+        for key in kwargs.keys():
             # Add items in a sorted way for unittest purposes.
             payload[key] = kwargs[key]
-
+        payload = sorted(payload.items(), key=lambda val: val[0])
         params = urlencode(payload)
         url = self.get_url('authorization_endpoint')
 
