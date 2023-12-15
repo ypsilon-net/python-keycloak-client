@@ -120,7 +120,7 @@ class Resource(ResurcesServerSubElement):
         'owner_managed_access': 'ownerManagedAccess',
         'owner': 'owner',
         'attributes': 'attributes',
-        'uri': 'uri',
+        'uris': 'uris',
         'type': 'type',
         'scopes': 'scopes',
     }
