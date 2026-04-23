@@ -18,7 +18,7 @@ __all__ = (
 )
 
 
-PAT_VAR = re.compile('{([\_\w]+)}')
+PAT_VAR = re.compile(r'{([_\w]+)}')
 
 
 class KeycloakAdminBase(object):
@@ -27,7 +27,7 @@ class KeycloakAdminBase(object):
 
     @classmethod
     def parse_path_params(cls, name, url):
-        rx_path = re.sub('\{([^}]+)\}', '(?P<\g<1>>.*?)', cls._paths[name])
+        rx_path = re.sub(r'\{([^}]+)\}', r'(?P<\g<1>>.*?)', cls._paths[name])
         return re.search('%s$' % rx_path, url).groupdict()
 
     def __init__(self, admin, **kwargs):
