@@ -101,6 +101,5 @@ ENV/
 .mypy_cache/
 
 .idea
-
 docs/_build
 .pytest_cache
