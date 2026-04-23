@@ -6,7 +6,7 @@ __all__ = ('Realm', 'Realms',)
 class Realm(KeycloakAdminBaseElement):
     _name = None
     _paths = {
-        'single': '/auth/admin/realms/{realm_name}',
+        'single': '/admin/realms/{realm_name}',
     }
 
     def __init__(self, realm_name, *args, **kwargs):
@@ -36,7 +36,7 @@ class Realm(KeycloakAdminBaseElement):
 
 class Realms(KeycloakAdminCollection):
     _paths = {
-        'collection': '/auth/admin/realms'
+        'collection': '/admin/realms'
     }
     _itemclass = Realm
 

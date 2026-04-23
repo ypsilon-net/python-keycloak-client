@@ -9,7 +9,7 @@ class Group(KeycloakAdminBaseElement):
     _id = None
     _realm_name = None
     _paths = {
-        'single': '/auth/admin/realms/{realm_name}/groups/{id}',
+        'single': '/admin/realms/{realm_name}/groups/{id}',
     }
     _idents = {'path': 'path'}
 
@@ -48,8 +48,8 @@ class Groups(KeycloakAdminCollection):
         'max': -1, # turns off default max (100)
     }
     _paths = {
-        'collection': '/auth/admin/realms/{realm_name}/groups',
-        'count': '/auth/admin/realms/{realm_name}/groups/count',
+        'collection': '/admin/realms/{realm_name}/groups',
+        'count': '/admin/realms/{realm_name}/groups/count',
     }
     _realm_name = None
     _itemclass = Group
@@ -137,8 +137,8 @@ class GroupMembers(KeycloakAdminCollection):
         'max': -1, # turns off default max (100)
     }
     _paths = {
-        'collection': '/auth/admin/realms/{realm_name}/groups/{group_id}/members',
-        # 'count': '/auth/admin/realms/{realm_name}/users/count',
+        'collection': '/admin/realms/{realm_name}/groups/{group_id}/members',
+        # 'count': '/admin/realms/{realm_name}/users/count',
     }
     _realm_name = None
     _itemclass = User

@@ -7,7 +7,7 @@ class User(KeycloakAdminBaseElement):
     _id = None
     _realm_name = None
     _paths = {
-        'single': '/auth/admin/realms/{realm_name}/users/{id}',
+        'single': '/admin/realms/{realm_name}/users/{id}',
     }
     _idents = {
         'attributes': 'attributes',
@@ -46,8 +46,8 @@ class Users(KeycloakAdminCollection):
         'max': -1, # turns off default max (100)
     }
     _paths = {
-        'collection': '/auth/admin/realms/{realm_name}/users',
-        'count': '/auth/admin/realms/{realm_name}/users/count',
+        'collection': '/admin/realms/{realm_name}/users',
+        'count': '/admin/realms/{realm_name}/users/count',
     }
     _realm_name = None
     _itemclass = User
