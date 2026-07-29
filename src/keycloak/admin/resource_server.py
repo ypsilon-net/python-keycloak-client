@@ -111,7 +111,7 @@ class ResurcesServerSubElement(KeycloakAdminBaseElement):
 
 class Resource(ResurcesServerSubElement):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource/{id}'
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource/{id}'
     }
     _idents = {
         'name': 'name',
@@ -128,14 +128,14 @@ class Resource(ResurcesServerSubElement):
 
 class Resources(ResurcesServerSubCollection):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource'
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/resource'
     }
     _itemclass = Resource
 
 
 class Scope(ResurcesServerSubElement):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/scope/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/scope/{id}',
     }
     _idents = {
         'name': 'name',
@@ -147,14 +147,14 @@ class Scopes(ResurcesServerSubCollection):
     _realm_name = None
     _client = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/scope'
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/scope'
     }
     _itemclass = Scope
 
 
 class Policy(ResurcesServerSubElement):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{id}',
     }
     _idents = {
         'name': 'name',
@@ -171,7 +171,7 @@ class Policy(ResurcesServerSubElement):
 
 class RolePolicy(Policy):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/role/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/role/{id}',
 
     }
     _idents = {
@@ -187,7 +187,7 @@ class RolePolicy(Policy):
 
 class GroupPolicy(Policy):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/group/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/group/{id}',
 
     }
     _idents = {
@@ -206,9 +206,9 @@ class GroupPolicy(Policy):
 
 class Policies(ResurcesServerSubCollection):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy',
-        RolePolicy: '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/role/',
-        GroupPolicy: '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/group/',
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy',
+        RolePolicy: '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/role/',
+        GroupPolicy: '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/group/',
     }
     _itemclass = ('type', {
         None: Policy,
@@ -230,23 +230,23 @@ class AssociatedBase(KeycloakAdminCollection):
 
 class AssociatedPolicies(Policies, AssociatedBase):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/associatedPolicies',
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/associatedPolicies',
     }
 
 class AssociatedResources(Resources, AssociatedBase):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/resources',
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/resources',
     }
 
 class AssociatedScopes(Scopes, AssociatedBase):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/scopes',
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/policy/{permission_id}/scopes',
     }
 
 
 class Permission(ResurcesServerSubElement):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/{id}',
     }
     _idents = {
         'name': 'name',
@@ -273,7 +273,7 @@ class Permission(ResurcesServerSubElement):
 
 class ResourcePermission(Permission):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/resource/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/resource/{id}',
     }
     _idents = copy(Permission._idents)
     _idents.update({
@@ -283,7 +283,7 @@ class ResourcePermission(Permission):
 
 class ScopePermission(Permission):
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/{id}',
     }
     _idents = copy(Permission._idents)
     _idents.update({
@@ -297,9 +297,9 @@ class ScopePermission(Permission):
 
 class Permissions(ResurcesServerSubCollection):
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission',
-        ResourcePermission: '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/resource/',
-        ScopePermission: '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/',
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission',
+        ResourcePermission: '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/resource/',
+        ScopePermission: '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server/permission/scope/',
     }
     _itemclass = ('type', {
         'resource': ResourcePermission,
@@ -312,7 +312,7 @@ class ResourceServer(KeycloakAdminBaseElement):
     _id = None
     _realm_name = None
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server',
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/authz/resource-server',
     }
     _idents = {
         'name': 'name',

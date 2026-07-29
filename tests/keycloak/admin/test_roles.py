@@ -26,7 +26,7 @@ class KeycloakAdminRolesTestCase(TestCase):
             scope_param_required=True
         )
         self.realm.client.get_full_url.assert_called_once_with(
-            '/admin/realms/realm-name/clients/#123/roles'
+            '/auth/admin/realms/realm-name/clients/#123/roles'
         )
         self.realm.client.post.assert_called_once_with(
             url=self.realm.client.get_full_url.return_value,
@@ -59,7 +59,7 @@ class KeycloakAdminRolesTestCase(TestCase):
             scope_param_required=True
         )
         self.realm.client.get_full_url.assert_called_once_with(
-            '/admin/realms/realm-name/clients/#123/roles/role-name'
+            '/auth/admin/realms/realm-name/clients/#123/roles/role-name'
         )
         self.realm.client.put.assert_called_once_with(
             url=self.realm.client.get_full_url.return_value,

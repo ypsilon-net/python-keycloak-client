@@ -6,7 +6,7 @@ class Client(KeycloakAdminBaseElement):
     _id = None
     _realm_name = None
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{id}',
+        'single': '/auth/admin/realms/{realm_name}/clients/{id}',
     }
     _idents = {'name': 'clientId'}
 
@@ -33,7 +33,7 @@ class Client(KeycloakAdminBaseElement):
 class Clients(KeycloakAdminCollection):
     _realm_name = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients'
+        'collection': '/auth/admin/realms/{realm_name}/clients'
     }
     _itemclass = Client
 

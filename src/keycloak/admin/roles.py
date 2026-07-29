@@ -98,7 +98,7 @@ class CompositeRoles(KeycloakAdminMapping):
     _role = None
     _realm_name = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/roles-by-id/{role_id}/composites'
+        'collection': '/auth/admin/realms/{realm_name}/roles-by-id/{role_id}/composites'
     }
     _itemclass = Role
 
@@ -121,7 +121,7 @@ class CompositeRoles(KeycloakAdminMapping):
 class RealmRole(Role):
     _realm_name = None
     _paths = {
-        'single': '/admin/realms/{realm_name}/roles/{role_name}'
+        'single': '/auth/admin/realms/{realm_name}/roles/{role_name}'
     }
 
     def __init__(self, realm_name, *args, **kwargs):
@@ -136,7 +136,7 @@ class RealmRole(Role):
 class RealmRoles(Roles):
     _realm_name = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/roles'
+        'collection': '/auth/admin/realms/{realm_name}/roles'
     }
     _itemclass = RealmRole
 
@@ -155,7 +155,7 @@ class RealmRoles(Roles):
 class ClientRole(RealmRole):
     _client = None
     _paths = {
-        'single': '/admin/realms/{realm_name}/clients/{client_id}/roles/{role_name}'
+        'single': '/auth/admin/realms/{realm_name}/clients/{client_id}/roles/{role_name}'
     }
 
     def __init__(self, client, *args, **kwargs):
@@ -175,7 +175,7 @@ class ClientRole(RealmRole):
 class ClientRoles(RealmRoles):
     _client = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/clients/{client_id}/roles'
+        'collection': '/auth/admin/realms/{realm_name}/clients/{client_id}/roles'
     }
     _itemclass = ClientRole
 

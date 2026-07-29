@@ -8,7 +8,7 @@ class RoleMappings(KeycloakAdminMapping):
     _realm_name = None
     _user = None
     _paths = {
-        'collection': '/admin/realms/{realm_name}/users/{user_id}/role-mappings',
+        'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings',
     }
 
     def __init__(self, realm_name, user, *args, **kwargs):
@@ -56,9 +56,9 @@ class ClientRoleMappings(RoleMappings):
     _client = None
     _composite = False
     _paths = {
-        'available': '/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/available',
-        'collection': '/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}',
-        'composite': '/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/composite',
+        'available': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/available',
+        'collection': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}',
+        'composite': '/auth/admin/realms/{realm_name}/users/{user_id}/role-mappings/clients/{client_id}/composite',
     }
     _itemclass = ClientRoleMapping
 
